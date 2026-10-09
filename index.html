@@ -74,6 +74,10 @@ textarea.fc.sv-open{min-height:64px;}
 .chips button.on{border-color:var(--gm);background:var(--gp);color:var(--gd);font-weight:700;}
 .lead .sv{font-size:13px;color:var(--g8);margin-top:6px;background:#f7f7f8;border-radius:10px;padding:6px 10px;line-height:1.55;}
 .lead .sv span{color:var(--g6);}
+.ai-st{font-size:13px;margin-top:8px;padding:8px 10px;border-radius:10px;background:#e3edf9;color:#1a4b8c;line-height:1.45;}
+.ai-st.warn{background:var(--warnbg);color:var(--warn);}
+.ai-st.busy::after{content:'';display:inline-block;width:10px;height:10px;margin-left:6px;border:2px solid #1a4b8c;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-1px;}
+@keyframes spin{to{transform:rotate(360deg)}}
 .sec-t{font-size:13px;font-weight:700;color:var(--g6);margin:2px 0 10px;}
 .side-btns{display:flex;flex-direction:column;gap:6px;}
 .speak{width:52px;height:34px;border-radius:10px;border:1.5px solid #ddd;background:#fff;font-size:16px;cursor:pointer;}
@@ -199,9 +203,10 @@ textarea.fc.sv-open{min-height:64px;}
 
       <div class="field" data-f="details">
         <div class="f-hd"><label for="f-details">บทสนทนา / รายละเอียดที่พูดคุย</label>
-          <button class="mini" id="btnReparse" type="button">🔄 ดึงข้อมูลอีกครั้ง</button></div>
+          <button class="mini" id="btnReparse" type="button">🔄 ให้ AI อ่านอีกครั้ง</button></div>
         <textarea class="fc" id="f-details" placeholder="บทสนทนาจะมาอยู่ที่นี่ ลบส่วนที่ไม่เกี่ยวหรือพิมพ์สรุปเพิ่มได้"></textarea>
         <div class="heard" id="h-details"></div>
+        <div class="ai-st" id="aiStatus" hidden></div>
       </div>
 
       <div class="btns">
@@ -218,7 +223,8 @@ textarea.fc.sv-open{min-height:64px;}
           <li><b>ทวนข้อมูลแบบเป็นธรรมชาติ</b> เช่น “คุณสมชายนะคะ เบอร์ 081-234-5678 ถูกไหมคะ” ได้ทั้งยืนยันกับลูกค้า และให้ระบบได้ยินชัดอีกรอบ</li>
           <li>ระหว่างคุย ดูช่อง <b>ชื่อ / เบอร์ / สาขา</b> และป้าย<b>แบบสอบถาม</b>ใต้ปุ่ม เรื่องไหนยังเทา ค่อยชวนคุยเรื่องนั้นต่อ ไม่ต้องถามเรียงข้อ ป้ายจะเป็นสีเขียวเมื่อระบบจับคำตอบได้</li>
           <li>ช่อง<b style="background:var(--guess)">สีเหลือง</b> = ระบบเดาจากบทสนทนา ตรวจแล้วกด “ถูกต้อง” ก่อนบันทึก ถ้าผิดพิมพ์แก้ หรือแตะ 🎤 ข้างช่องเพื่อพูดใหม่เฉพาะช่องนั้น</li>
-          <li>ใส่รายชื่อสาขาไว้ที่ ⚙️ ระบบจะจับชื่อสาขาได้แม่นขึ้นมาก</li>
+          <li>คุยจบแล้ว <b>AI (Claude) จะอ่านบทสนทนาทั้งหมด</b> แล้วกรอกชื่อ เบอร์ สาขา แบบสอบถาม และสรุปให้ (~10 วินาที) ช่องที่พนักงานพิมพ์หรือกดยืนยันแล้วจะไม่ถูกแก้</li>
+          <li>ใส่รายชื่อสาขาไว้ที่ ⚙️ AI จะเลือกชื่อสาขาที่ถูกต้องให้ แม้ได้ยินเพี้ยน</li>
         </ol>
       </details>
       <div class="tip-row">
@@ -279,7 +285,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '7 (9 ต.ค. 69)';
+var APP_VERSION = '8 (9 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -550,6 +556,7 @@ function saveDraft(){
     survey:getSurvey(), heard:heard, guessed:Object.keys(guessed), editingId:editingId });
 }
 function fillForm(o){
+  formGen++; setAiStatus('');
   F.name.value = o.name || ''; F.phone.value = o.phone || ''; F.branch.value = o.branch || ''; F.details.value = o.details || '';
   heard = Object.assign({ name:'', phone:'', branch:'', details:'' }, o.heard || {});
   ['name','phone','branch','details'].forEach(function(f){ setHeard(f, heard[f] ? 'ได้ยิน: “' + esc(heard[f]) + '”' : ''); });
@@ -880,6 +887,7 @@ var APPLY = {
       (r.filled.length ? 'เติมให้: <b>' + r.filled.join(', ') + '</b> — ตรวจช่องสีเหลือง' : 'ไม่พบข้อมูลใหม่ในบทสนทนา');
     if (r.otherPhones.length) msg += ' · <b style="color:var(--warn)">พบเบอร์อื่นด้วย: ' + esc(r.otherPhones.map(fmtPhone).join(', ')) + '</b>';
     setHeard('details', msg + (low ? LOW_NOTE : ''));
+    aiRead();
   }
 };
 function applySurveyMic(text, texts, low, st){
@@ -911,10 +919,74 @@ function autoExtract(lines, texts){
 $('#btnReparse').addEventListener('click', function(){
   var lines = F.details.value.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
   if (!lines.length){ toast('ยังไม่มีบทสนทนาให้ดึงข้อมูล'); return; }
-  var r = autoExtract(lines);
+  autoExtract(lines.filter(function(l){ return l.indexOf(SUMMARY_PREFIX) !== 0; }));
   refreshGot(); saveDraft();
-  toast(r.filled.length ? 'เติมให้: ' + r.filled.join(', ') + ' — ตรวจช่องสีเหลือง' : 'ไม่พบข้อมูลเพิ่ม (เติมเฉพาะช่องที่ยังว่าง)');
+  aiRead();
 });
+/* ---------- Claude reads the conversation ---------- */
+// Supabase function booth-extract (repo Em-O-Cha/Order, supabase/functions/booth-extract) calls Claude with the
+// shop's API key. Its answers fill fields that are empty or still unconfirmed guesses; anything staff typed or
+// confirmed is left alone. If it fails, the rule-based guesses above stay.
+var AI_URL = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/booth-extract?forceFunctionRegion=ap-northeast-2';
+var AI_TIMEOUT_MS = 45000;
+var SUMMARY_PREFIX = '📝 สรุป: ';
+var formGen = 0;   // bumped whenever the form is cleared or replaced, so a late answer can't land on the next customer
+function setAiStatus(html, kind){
+  var el = $('#aiStatus'); if (!el) return;
+  el.hidden = !html; el.innerHTML = html || ''; el.className = 'ai-st' + (kind ? ' ' + kind : '');
+}
+function transcriptText(){
+  return F.details.value.split('\n').filter(function(l){ return l.indexOf(SUMMARY_PREFIX) !== 0; }).join('\n').trim();
+}
+function aiRead(){
+  var text = transcriptText();
+  if (!text) return;
+  var gen = formGen, ctrl = window.AbortController ? new AbortController() : null;
+  var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, AI_TIMEOUT_MS);
+  setAiStatus('🤖 AI กำลังอ่านบทสนทนา… (ประมาณ 10 วินาที)', 'busy');
+  fetch(AI_URL, { method:'POST', headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify({ transcript:text.slice(-20000), branches:cfg.branches }), signal:ctrl ? ctrl.signal : undefined })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      clearTimeout(timer);
+      if (gen !== formGen) return;
+      if (!res || !res.success) throw new Error((res && res.error) || 'ไม่ทราบสาเหตุ');
+      var filled = applyAi(res.data || {});
+      refreshGot(); saveDraft();
+      setAiStatus(filled.length ? '🤖 AI เติมให้: <b>' + esc(filled.join(', ')) + '</b> — ตรวจช่องสีเหลือง แล้วกด ✓ ถูกต้อง'
+        : '🤖 AI อ่านแล้ว ไม่พบข้อมูลเพิ่ม (ช่องที่ยืนยันหรือพิมพ์เองจะไม่ถูกแก้)', 'ok');
+    })
+    .catch(function(e){
+      clearTimeout(timer);
+      if (gen !== formGen) return;
+      var why = e && e.name === 'AbortError' ? 'ตอบช้าเกินไป' : (e && e.message) || 'เน็ตหลุด?';
+      setAiStatus('⚠ AI อ่านไม่สำเร็จ (' + esc(why) + ') — ใช้ค่าที่ระบบเดาไว้ก่อน แตะ 🔄 เพื่อลองใหม่', 'warn');
+    });
+}
+function aiCanFill(f, el){ return !el.value.trim() || guessed[f]; }
+function applyAi(d){
+  var filled = [];
+  function put(f, el, v, label){
+    v = String(v || '').trim();
+    if (!v || !aiCanFill(f, el)) return;
+    if (el.value.trim() !== v){ el.value = v; filled.push(label); }
+    setGuess(f, true);
+  }
+  var ph = normPhone(digitsOf(d.phone));
+  put('name', F.name, d.name, 'ชื่อ');
+  put('phone', F.phone, ph ? (isValidPhone(ph) ? fmtPhone(ph) : ph) : '', 'เบอร์');
+  put('branch', F.branch, d.branch, 'สาขา');
+  updatePhoneStatus();
+  var sv = d.survey || {};
+  SURVEY.forEach(function(Q){ put('sv_' + Q.k, svEl(Q.k), sv[Q.k], Q.short); syncChips(Q.k); });
+  var summary = String(d.summary || '').trim();
+  if (summary){
+    F.details.value = SUMMARY_PREFIX + summary + '\n' + transcriptText();
+    renderConvoBtn();
+  }
+  return filled;
+}
+
 function toggleRec(f){ if (active && active.field === f) stopRec(); else startRec(f); }
 $('#btnConvo').addEventListener('click', function(){ toggleRec('convo'); });
 document.querySelectorAll('[data-mic]').forEach(function(btn){
