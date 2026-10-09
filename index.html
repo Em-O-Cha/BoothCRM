@@ -74,14 +74,6 @@ textarea.fc.sv-open{min-height:64px;}
 .chips button.on{border-color:var(--gm);background:var(--gp);color:var(--gd);font-weight:700;}
 .lead .sv{font-size:13px;color:var(--g8);margin-top:6px;background:#f7f7f8;border-radius:10px;padding:6px 10px;line-height:1.55;}
 .lead .sv span{color:var(--g6);}
-.clip-box{margin-top:14px;border-top:1px dashed #ddd;padding-top:12px;}
-.clip-hd{font-size:13px;font-weight:700;color:var(--g8);margin-bottom:8px;}
-.clip-hd small{display:block;font-weight:500;color:var(--g6);}
-.clip-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.clip-btns .mini{height:46px;display:flex;align-items:center;justify-content:center;font-size:14px;text-align:center;}
-.clip-btns .mini.on{background:var(--rec);border-color:var(--rec);color:#fff;animation:pulse 1.2s infinite;}
-.clip-info{font-size:12.5px;color:var(--g6);margin-top:6px;line-height:1.5;}
-.clip-info a{color:var(--gm);font-weight:600;}
 .ai-st{font-size:13px;margin-top:8px;padding:8px 10px;border-radius:10px;background:#e3edf9;color:#1a4b8c;line-height:1.45;}
 .ai-st.warn{background:var(--warnbg);color:var(--warn);}
 .ai-st.busy::after{content:'';display:inline-block;width:10px;height:10px;margin-left:6px;border:2px solid #1a4b8c;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-1px;}
@@ -162,15 +154,6 @@ textarea.fc.sv-open{min-height:64px;}
       <div class="got" id="got"></div>
       <div class="sv-tags" id="svTags"></div>
       <div class="live-box" id="convoLive"></div>
-      <div class="clip-box">
-        <div class="clip-hd">หรือใช้คลิปเสียง<small>ได้ยินเสียงลูกค้าชัดกว่า และแยกได้ว่าใครพูด (พนักงาน / ลูกค้า)</small></div>
-        <div class="clip-btns">
-          <button class="mini" id="btnClipRec" type="button">⏺ อัดเสียงเป็นคลิป</button>
-          <label class="mini" for="clipFile">📁 อัปโหลดคลิปเสียง</label>
-        </div>
-        <input type="file" id="clipFile" accept="audio/*,video/*" hidden>
-        <div class="clip-info" id="clipInfo"></div>
-      </div>
     </div></div>
 
     <div class="card"><div class="bd">
@@ -240,7 +223,7 @@ textarea.fc.sv-open{min-height:64px;}
           <li><b>ทวนข้อมูลแบบเป็นธรรมชาติ</b> เช่น “คุณสมชายนะคะ เบอร์ 081-234-5678 ถูกไหมคะ” ได้ทั้งยืนยันกับลูกค้า และให้ระบบได้ยินชัดอีกรอบ</li>
           <li>ระหว่างคุย ดูช่อง <b>ชื่อ / เบอร์ / สาขา</b> และป้าย<b>แบบสอบถาม</b>ใต้ปุ่ม เรื่องไหนยังเทา ค่อยชวนคุยเรื่องนั้นต่อ ไม่ต้องถามเรียงข้อ ป้ายจะเป็นสีเขียวเมื่อระบบจับคำตอบได้</li>
           <li>ช่อง<b style="background:var(--guess)">สีเหลือง</b> = ระบบเดาจากบทสนทนา ตรวจแล้วกด “ถูกต้อง” ก่อนบันทึก ถ้าผิดพิมพ์แก้ หรือแตะ 🎤 ข้างช่องเพื่อพูดใหม่เฉพาะช่องนั้น</li>
-          <li><b>บูธเสียงดัง หรือระบบไม่ได้ยินลูกค้า:</b> ใช้ <b>⏺ อัดเสียงเป็นคลิป</b> (หรืออัดด้วยแอปอัดเสียงแล้วกด 📁 อัปโหลด) ระบบจะแปลงเสียงทั้งโต๊ะ แยกว่าใครพูด แล้วให้ AI กรอกให้</li>
+          <li><b>ระบบได้ยินเสียงพนักงานชัดที่สุด</b> (มือถือฟังคนที่อยู่ใกล้) ถ้าเสียงลูกค้าไม่ติด: ทวนสิ่งที่ลูกค้าพูดระหว่างคุย หรือพอลูกค้าไปแล้ว แตะบันทึกแล้วพูดสรุปสั้น ๆ เช่น “คุณวีระ เบอร์ 089… แฟรนไชส์สาขารังสิต ขายดี อยากได้ป้าย” AI จะกรอกให้จากที่พนักงานพูด</li>
           <li>คุยจบแล้ว <b>AI (Claude) จะอ่านบทสนทนาทั้งหมด</b> แล้วกรอกชื่อ เบอร์ สาขา แบบสอบถาม และสรุปให้ (~10 วินาที) ช่องที่พนักงานพิมพ์หรือกดยืนยันแล้วจะไม่ถูกแก้</li>
           <li>ใส่รายชื่อสาขาไว้ที่ ⚙️ AI จะเลือกชื่อสาขาที่ถูกต้องให้ แม้ได้ยินเพี้ยน</li>
         </ol>
@@ -303,7 +286,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '9 (9 ต.ค. 69)';
+var APP_VERSION = '10 (9 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -743,7 +726,7 @@ function keepAwake(on){
   try {
     if (on && navigator.wakeLock && !wakeLock){
       navigator.wakeLock.request('screen').then(function(l){
-        if (!convoState() && !clipRec){ l.release(); return; }
+        if (!convoState()){ l.release(); return; }
         wakeLock = l; l.addEventListener('release', function(){ wakeLock = null; });
       }).catch(function(){});
     } else if (!on && wakeLock){ wakeLock.release(); wakeLock = null; }
@@ -808,7 +791,6 @@ function startRec(field){
   if (!SR){ toast('เบราว์เซอร์นี้ไม่รองรับเสียง — พิมพ์แทน หรือเปิดด้วย Chrome'); return null; }
   if (active){ pendingStart = field; stopRec(); return null; }
   if (noiseBusy) return null;
-  if (clipRec){ toast('กำลังอัดคลิปอยู่ — กดหยุดอัดก่อน'); return null; }
   var st = { field:field, segs:[], sessionFinals:[], interim:'', stopping:false, done:false, error:null, t0:Date.now() };
   st.lastSpeech = st.t0; st.lastHeard = '';
   try { openSession(st); } catch(err){ toast('เริ่มฟังไม่ได้ ลองอีกครั้ง'); return null; }
@@ -1009,96 +991,6 @@ function applyAi(d){
   renderConvoBtn();
   return filled;
 }
-
-/* ---------- audio clips: record or upload, then transcribe with speaker separation ---------- */
-// booth-transcribe (Supabase, repo Em-O-Cha/Order) sends the clip to ElevenLabs Scribe and returns lines
-// labelled "ผู้พูด 1", "ผู้พูด 2"…; Claude (aiRead) then says who is staff/customer and fills the form.
-var TRANSCRIBE_URL = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/booth-transcribe?forceFunctionRegion=ap-northeast-2';
-var MAX_CLIP_BYTES = 25 * 1024 * 1024;
-var TRANSCRIBE_TIMEOUT_MS = 240000;
-var clipRec = null, clipBusy = false, clipUrl = null;
-function clipInfo(html){ $('#clipInfo').innerHTML = html || ''; }
-function offerClipDownload(blob, name){
-  if (clipUrl) URL.revokeObjectURL(clipUrl);
-  clipUrl = URL.createObjectURL(blob);
-  clipInfo('🎧 ' + esc(name) + ' (' + (blob.size / 1048576).toFixed(1) + ' MB) · <a href="' + clipUrl + '" download="' + esc(name) + '">💾 เก็บไฟล์เสียงไว้ในเครื่อง</a>');
-}
-function transcribeClip(blob, name){
-  if (clipBusy){ toast('กำลังแปลงคลิปก่อนหน้าอยู่'); return; }
-  if (active){ toast('หยุดไมค์ก่อน แล้วค่อยใช้คลิป'); return; }
-  if (blob.size > MAX_CLIP_BYTES){ toast('ไฟล์ใหญ่เกิน 25 MB — ตัดให้สั้นลง หรืออัดเป็นช่วง ๆ', 4500); return; }
-  clipBusy = true;
-  var gen = formGen, ctrl = window.AbortController ? new AbortController() : null;
-  var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, TRANSCRIBE_TIMEOUT_MS);
-  setAiStatus('🎧 กำลังแปลงเสียงเป็นข้อความและแยกคนพูด… (คลิป ' + (blob.size / 1048576).toFixed(1) + ' MB อาจใช้ 1–2 นาที)', 'busy');
-  var fd = new FormData();
-  fd.append('file', blob, name);
-  fd.append('keyterms', JSON.stringify(['เอมโอชา', 'Em-O-Cha', 'แฟรนไชส์', 'คอร์ปอเรท'].concat(cfg.branches).slice(0, 100)));
-  fetch(TRANSCRIBE_URL, { method:'POST', body:fd, signal:ctrl ? ctrl.signal : undefined })
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-      clearTimeout(timer); clipBusy = false;
-      if (gen !== formGen) return;
-      if (!res || !res.success) throw new Error((res && res.error) || 'ไม่ทราบสาเหตุ');
-      var lines = Array.isArray(res.lines) ? res.lines : [];
-      if (!lines.length){ setAiStatus('⚠ ไม่พบเสียงพูดในคลิปนี้', 'warn'); return; }
-      var cur = transcriptText();
-      F.details.value = (cur ? cur + '\n' : '') + lines.map(function(l){ return l.speaker + ': ' + l.text; }).join('\n');
-      heard.details = (heard.details ? heard.details + ' / ' : '') + '[คลิป ' + name + ']';
-      autoExtract(lines.map(function(l){ return l.text; }));
-      refreshGot(); renderConvoBtn(); saveDraft();
-      aiRead();
-    })
-    .catch(function(e){
-      clearTimeout(timer); clipBusy = false;
-      if (gen !== formGen) return;
-      var why = e && e.name === 'AbortError' ? 'ใช้เวลานานเกินไป' : (e && e.message) || 'เน็ตหลุด?';
-      setAiStatus('⚠ แปลงเสียงไม่สำเร็จ (' + esc(why) + ') — เก็บไฟล์เสียงไว้แล้วอัปโหลดใหม่ภายหลังได้', 'warn');
-    });
-}
-$('#clipFile').addEventListener('change', function(){
-  var f = this.files && this.files[0];
-  this.value = '';
-  if (!f) return;
-  clipInfo('🎧 ' + esc(f.name) + ' (' + (f.size / 1048576).toFixed(1) + ' MB)');
-  transcribeClip(f, f.name);
-});
-function renderClipBtn(){
-  var b = $('#btnClipRec');
-  b.classList.toggle('on', !!clipRec);
-  b.textContent = clipRec ? '⏹ หยุดอัด · ' + mmss(Date.now() - clipRec.t0) : '⏺ อัดเสียงเป็นคลิป';
-}
-// Records the whole table with the phone's own processing turned down, so a customer further away still
-// ends up in the clip (Chrome's live recognizer filters such voices out).
-$('#btnClipRec').addEventListener('click', function(){
-  if (clipRec){ clipRec.rec.stop(); return; }
-  if (active){ toast('หยุดบันทึกบทสนทนาแบบสดก่อน'); return; }
-  if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    toast('เครื่องนี้อัดเสียงในหน้าเว็บไม่ได้ — ใช้แอปอัดเสียงแล้วกด 📁 อัปโหลดแทน', 4500); return;
-  }
-  navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:true } }).then(function(stream){
-    var rec = new MediaRecorder(stream), chunks = [];
-    var track = stream.getAudioTracks()[0];
-    rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
-    rec.onstop = function(){
-      stream.getTracks().forEach(function(t){ t.stop(); });
-      clearInterval(clipRec && clipRec.tick);
-      clipRec = null; keepAwake(false); renderClipBtn();
-      var type = rec.mimeType || (chunks[0] && chunks[0].type) || 'audio/webm';
-      var ext = /mp4|m4a|aac/.test(type) ? 'm4a' : /ogg/.test(type) ? 'ogg' : 'webm';
-      var blob = new Blob(chunks, { type:type });
-      if (!blob.size){ toast('ไม่ได้เสียงในคลิป ลองใหม่อีกครั้ง'); return; }
-      var name = 'booth-' + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '') + '.' + ext;
-      offerClipDownload(blob, name);
-      transcribeClip(blob, name);
-    };
-    rec.start(1000);
-    clipRec = { rec:rec, t0:Date.now(), tick:setInterval(renderClipBtn, 1000) };
-    keepAwake(true); renderClipBtn();
-    clipInfo('🔴 กำลังอัด… ไมค์: ' + esc((track && track.label) || 'ไมค์ของเครื่อง') + ' — คุยกับลูกค้าตามปกติ แล้วกดหยุดอัด');
-    if (navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
-  }).catch(function(){ toast('ไม่ได้รับอนุญาตใช้ไมโครโฟน'); });
-});
 
 function toggleRec(f){ if (active && active.field === f) stopRec(); else startRec(f); }
 $('#btnConvo').addEventListener('click', function(){ toggleRec('convo'); });
@@ -1354,7 +1246,7 @@ var draft = load(LS_DRAFT, null);
 if (draft) fillForm(draft); else updatePhoneStatus();
 renderList();
 if (!cfg.event && !leads.length) $('#tipBox').open = true;
-window.addEventListener('beforeunload', function(e){ if (active || clipRec || clipBusy){ e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', function(e){ if (active){ e.preventDefault(); e.returnValue = ''; } });
 })();
 </script>
 </body>
