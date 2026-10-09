@@ -234,10 +234,11 @@ textarea.fc.sv-open{min-height:64px;}
   <section id="tab-list" hidden>
     <div class="list-tools">
       <input class="fc" id="q" placeholder="ค้นหา ชื่อ / เบอร์ / สาขา / รายละเอียด">
-      <button class="mini" id="btnExport">⬇️ CSV</button>
+      <button class="mini" id="btnExport">⬇️ Excel</button>
+      <button class="mini" id="btnShare" hidden>📤 แชร์</button>
     </div>
     <div class="card" id="leadList"></div>
-    <p class="hint" style="text-align:center">ข้อมูลเก็บอยู่ในเครื่องนี้เท่านั้น — กด ⬇️ CSV ส่งออกเป็นระยะ (เปิดด้วย Excel / Google Sheets ได้)</p>
+    <p class="hint" style="text-align:center">ข้อมูลเก็บอยู่ในเครื่องนี้เท่านั้น — กด ⬇️ Excel ส่งออกเป็นระยะ (เปิดด้วย Google Sheets / Excel ได้) หรือ 📤 แชร์ไฟล์เข้า LINE / Google Drive</p>
   </section>
 </div>
 
@@ -267,7 +268,7 @@ textarea.fc.sv-open{min-height:64px;}
     </div>
     <hr style="border:none;border-top:1px solid #eee;margin:18px 0">
     <button class="btn red" id="btnWipe">🗑️ ลบรายชื่อลูกค้าทั้งหมดในเครื่องนี้</button>
-    <p class="hint" style="margin-top:6px">ควรส่งออก CSV ก่อนลบ</p>
+    <p class="hint" style="margin-top:6px">ควรส่งออกไฟล์ Excel ก่อนลบ</p>
   </div>
 </div>
 
@@ -278,7 +279,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '6 (9 ต.ค. 69)';
+var APP_VERSION = '7 (9 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -957,7 +958,7 @@ $('#btnNoise').addEventListener('click', function(){
 
 /* ---------- save / list ---------- */
 function persistLeads(){
-  if (!store(LS_LEADS, leads)){ alert('บันทึกลงเครื่องไม่สำเร็จ (พื้นที่เต็ม หรือเปิดโหมดไม่ระบุตัวตน) — กรุณาส่งออก CSV ทันที'); return false; }
+  if (!store(LS_LEADS, leads)){ alert('บันทึกลงเครื่องไม่สำเร็จ (พื้นที่เต็ม หรือเปิดโหมดไม่ระบุตัวตน) — กรุณาส่งออกไฟล์ Excel ทันที'); return false; }
   return true;
 }
 // Saving never blocks at the booth: anything missing or unchecked is saved as a flag to follow up later.
@@ -1050,8 +1051,7 @@ $('#leadList').addEventListener('click', function(e){
 });
 
 function csvCell(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
-$('#btnExport').addEventListener('click', function(){
-  if (!leads.length){ toast('ยังไม่มีข้อมูล'); return; }
+function exportTable(){
   var head = ['วันที่เวลา','งาน/บูธ','ผู้บันทึก','ชื่อ','เบอร์โทร','เจ้าของสาขา']
     .concat(SURVEY.map(function(Q){ return Q.q; }), ['รายละเอียดที่พูดคุย','หมายเหตุ','ข้อความที่ระบบได้ยิน']);
   var rows = leads.slice().reverse().map(function(l){
@@ -1061,21 +1061,73 @@ $('#btnExport').addEventListener('click', function(){
     return [new Date(l.createdAt).toLocaleString('th-TH'), l.event, l.staff, l.name, l.phone, l.branch]
       .concat(SURVEY.map(function(Q){ return sv[Q.k] || ''; }), [l.details, (l.flags || []).join('; '), raw]);
   });
-  var csv = '﻿' + [head].concat(rows).map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+  return [head].concat(rows);
+}
+function exportName(ext){
   var day = new Date().toISOString().slice(0, 10);
-  a.download = 'booth-leads-' + (cfg.event ? cfg.event.replace(/[\\/:*?"<>|\s]+/g, '_') + '-' : '') + day + '.csv';
+  return 'booth-leads-' + (cfg.event ? cfg.event.replace(/[\\/:*?"<>|\s]+/g, '_') + '-' : '') + day + '.' + ext;
+}
+// The spreadsheet library is only fetched when someone exports (or opens the list), not on every page load.
+var XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+var xlsxLoading = null;
+function loadXlsx(){
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (!xlsxLoading) xlsxLoading = new Promise(function(res, rej){
+    var sc = document.createElement('script'); sc.src = XLSX_URL;
+    sc.onload = function(){ window.XLSX ? res(window.XLSX) : rej(); };
+    sc.onerror = function(){ xlsxLoading = null; rej(); };
+    document.head.appendChild(sc);
+  });
+  return xlsxLoading;
+}
+var XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+function buildXlsx(X){
+  var table = exportTable(), ws = X.utils.aoa_to_sheet(table);
+  ws['!cols'] = table[0].map(function(h, i){ return { wch: i < 6 ? 16 : i < 13 ? 22 : 50 }; });
+  var wb = X.utils.book_new();
+  X.utils.book_append_sheet(wb, ws, 'ลูกค้า');
+  return new Blob([X.write(wb, { bookType:'xlsx', type:'array' })], { type:XLSX_TYPE });
+}
+function csvBlob(){
+  return new Blob(['﻿' + exportTable().map(function(r){ return r.map(csvCell).join(','); }).join('\r\n')], { type:'text/csv;charset=utf-8' });
+}
+function download(blob, name){
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+}
+$('#btnExport').addEventListener('click', function(){
+  if (!leads.length){ toast('ยังไม่มีข้อมูล'); return; }
+  loadXlsx().then(function(X){
+    download(buildXlsx(X), exportName('xlsx'));
+    toast('✓ ได้ไฟล์ Excel แล้ว — เปิดด้วย Google Sheets หรือ Excel ได้');
+  }, function(){
+    download(csvBlob(), exportName('csv'));
+    toast('โหลดตัวสร้างไฟล์ Excel ไม่ได้ (เน็ตหลุด?) — ส่งออกเป็น CSV แทน', 4500);
+  });
 });
+// Share the file straight to LINE / Google Drive / email from the phone's share menu.
+$('#btnShare').addEventListener('click', function(){
+  if (!leads.length){ toast('ยังไม่มีข้อมูล'); return; }
+  loadXlsx().then(function(X){
+    var file = new File([buildXlsx(X)], exportName('xlsx'), { type:XLSX_TYPE });
+    return navigator.share({ files:[file], title:'รายชื่อลูกค้าหน้าบูธ' });
+  }).catch(function(e){ if (!e || e.name !== 'AbortError') toast('แชร์ไม่ได้ — ใช้ปุ่ม ⬇️ Excel แทน'); });
+});
+(function(){
+  try {
+    var probe = new File([''], 'a.xlsx', { type:XLSX_TYPE });
+    $('#btnShare').hidden = !(navigator.canShare && navigator.canShare({ files:[probe] }));
+  } catch(e){ $('#btnShare').hidden = true; }
+})();
 
 /* ---------- tabs / settings ---------- */
 function showTab(t){
   document.querySelectorAll('.tabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
   $('#tab-capture').hidden = t !== 'capture';
   $('#tab-list').hidden = t !== 'list';
-  if (t === 'list'){ if (active) stopRec(); renderList(); }
+  if (t === 'list'){ if (active) stopRec(); renderList(); loadXlsx().catch(function(){}); }
 }
 document.querySelectorAll('.tabs button').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.dataset.tab); }); });
 
