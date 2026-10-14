@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#c81d11">
+<title>เอมโอชา · พริกผัดน้ำมันมะกอกอัลมอนด์</title>
+<meta name="description" content="ฮิตติดกระแส ของแรร์คนตามหา — พริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา Only at 7-Eleven">
+<meta property="og:title" content="เอมโอชา · พริกผัดน้ำมันมะกอกอัลมอนด์">
+<meta property="og:description" content="ฮิตติดกระแส ของแรร์คนตามหา · Only at 7-Eleven">
+<meta property="og:image" content="https://em-o-cha.github.io/BoothCRM/brochure/og.jpg">
+<link rel="icon" href="logo.png">
+<link rel="preload" as="image" href="hit.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{ --red:#d4170f; --red2:#ff4d1f; --yellow:#ffe500; --ink:#1b0f0c; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;overflow:hidden;overscroll-behavior:none;}
+/* ---------- stage: a phone-sized story, blurred copy of the slide behind it ---------- */
+.bgblur{position:fixed;inset:-40px;background-size:cover;background-position:center;filter:blur(38px) saturate(1.4) brightness(.55);transform:scale(1.1);transition:background-image .6s;}
+.stage{position:relative;height:100%;max-width:480px;margin:0 auto;overflow:hidden;background:#000;box-shadow:0 0 80px rgba(0,0,0,.6);user-select:none;-webkit-user-select:none;touch-action:pan-y;}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(1.04);transition:opacity .45s ease, transform .6s cubic-bezier(.2,.8,.2,1);pointer-events:none;}
+.slide.on{opacity:1;transform:none;pointer-events:auto;}
+.slide .fill{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(24px) saturate(1.3) brightness(.7);}
+/* the artwork itself is shown untouched; effects sit on top in the same box, so percentages line up with the art */
+.art{position:relative;width:100%;aspect-ratio:1414/2000;max-height:100%;}
+@supports not (aspect-ratio:1){ .art{height:0;padding-bottom:141.44%;} }
+.art img{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:0;}
+.slide.on .art{animation:breathe 7s ease-in-out infinite alternate;}
+@keyframes breathe{from{transform:scale(1)}to{transform:scale(1.035)}}
+.shine{position:absolute;inset:0;overflow:hidden;pointer-events:none;mix-blend-mode:screen;}
+.shine::before{content:'';position:absolute;top:-20%;bottom:-20%;width:38%;left:-60%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.0) 30%,rgba(255,250,210,.42) 50%,rgba(255,255,255,0) 70%,transparent);
+  transform:skewX(-14deg);}
+.slide.on .shine::before{animation:sweep 3.6s cubic-bezier(.4,0,.2,1) .5s infinite;}
+@keyframes sweep{0%{left:-60%}55%,100%{left:130%}}
+/* pulse rings on the hearts / likes / wow faces printed in the art */
+.ping{position:absolute;width:7%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;}
+.ping::before,.ping::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.95);opacity:0;}
+.ping.h::before,.ping.h::after{border-color:#ff5d7a;box-shadow:0 0 14px #ff2d55;}
+.ping.l::before,.ping.l::after{border-color:#b98cff;box-shadow:0 0 14px #8a4dff;}
+.ping.e::before,.ping.e::after{border-color:#ffe500;box-shadow:0 0 14px #ffc400;}
+.slide.on .ping::before{animation:ring 2.2s ease-out infinite;animation-delay:var(--d,0s);}
+.slide.on .ping::after{animation:ring 2.2s ease-out infinite;animation-delay:calc(var(--d,0s) + 1.1s);}
+@keyframes ring{0%{transform:scale(.7);opacity:.95}100%{transform:scale(2.1);opacity:0}}
+.spark{position:absolute;width:3.2%;aspect-ratio:1;transform:translate(-50%,-50%) scale(0);pointer-events:none;
+  background:radial-gradient(circle,#fff 0 12%,rgba(255,240,150,.9) 13% 22%,transparent 60%);
+  clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%);}
+.slide.on .spark{animation:twinkle var(--t,2.4s) ease-in-out infinite;animation-delay:var(--d,0s);}
+@keyframes twinkle{0%,100%{transform:translate(-50%,-50%) scale(0) rotate(0)}45%{transform:translate(-50%,-50%) scale(1.25) rotate(45deg)}70%{transform:translate(-50%,-50%) scale(.6) rotate(90deg)}}
+/* ---------- story chrome ---------- */
+.top{position:absolute;left:0;right:0;top:0;z-index:20;padding:calc(env(safe-area-inset-top) + 10px) 12px 26px;
+  background:linear-gradient(rgba(0,0,0,.55),transparent);pointer-events:none;}
+.bars{display:flex;gap:4px;}
+.bars i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden;}
+.bars i b{display:block;height:100%;width:0;background:#fff;}
+.who{display:flex;align-items:center;gap:9px;margin-top:10px;}
+.who img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#000;border:2px solid var(--yellow);}
+.who div{font-size:13.5px;line-height:1.2;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+.who b{font-family:Prompt;font-weight:600;}
+.who span{display:block;font-size:11.5px;opacity:.85;}
+.tapzone{position:absolute;top:0;bottom:0;z-index:10;}
+.tapzone.prev{left:0;width:32%;} .tapzone.next{right:0;width:68%;}
+.side{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:25;display:flex;gap:10px;justify-content:center;}
+.side button,.side a{height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  color:#fff;font:600 14px 'IBM Plex Sans Thai',sans-serif;display:flex;align-items:center;gap:6px;cursor:pointer;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+.side .liked{background:rgba(255,45,85,.85);animation:pop .35s;}
+@keyframes pop{50%{transform:scale(1.25)}}
+.hint{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 68px);transform:translateX(-50%);z-index:25;
+  font-size:13px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:999px;padding:7px 14px;white-space:nowrap;
+  animation:nudge 1.6s ease-in-out infinite;pointer-events:none;transition:opacity .3s;}
+@keyframes nudge{50%{transform:translateX(calc(-50% + 6px))}}
+/* floating reactions, like a live stream */
+.react{position:absolute;right:14px;bottom:calc(env(safe-area-inset-bottom) + 64px);z-index:24;pointer-events:none;width:60px;height:60vh;}
+.react span{position:absolute;bottom:0;left:50%;font-size:26px;animation:floatup var(--t,3.2s) ease-out forwards;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));}
+@keyframes floatup{0%{transform:translate(-50%,0) scale(.4);opacity:0}12%{opacity:1;transform:translate(-50%,-30px) scale(1.1)}
+  100%{transform:translate(calc(-50% + var(--x,0px)),-55vh) scale(.9) rotate(var(--r,0deg));opacity:0}}
+/* ---------- final slide: call to action ---------- */
+.cta{position:absolute;inset:0;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 74px) 18px calc(env(safe-area-inset-bottom) + 28px);
+  background:radial-gradient(120% 70% at 50% 0%,#ff7a1a 0%,#e0260f 45%,#8f0d06 100%);}
+.cta::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg at 50% 18%,rgba(255,230,120,.12) 0 6deg,transparent 6deg 18deg);animation:spin 40s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cta > *{position:relative;}
+/* a close-up of the jar in rare.webp (art px ~565-1045 × 1520-2000), not a new image */
+.cta .jar{display:block;width:62%;margin:0 auto;border-radius:24px;aspect-ratio:1;background:url(rare.webp) 60.5% 100%/294.6% auto no-repeat;
+  box-shadow:0 18px 40px rgba(0,0,0,.35);animation:bob 3s ease-in-out infinite;}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-1.5deg)}}
+.cta h2{font-family:Prompt;font-weight:800;font-size:31px;line-height:1.15;text-align:center;margin-top:16px;color:var(--yellow);
+  text-shadow:0 3px 0 #7a0c05,0 6px 18px rgba(0,0,0,.35);}
+.cta .sub{text-align:center;font-size:15px;margin-top:6px;opacity:.95;}
+.chip{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.chip span{font-size:13px;font-weight:600;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 12px;}
+.marquee{margin:18px -18px 0;overflow:hidden;white-space:nowrap;padding:10px 0;background:rgba(0,0,0,.18);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
+.marquee div{display:inline-block;animation:scroll 48s linear infinite;}
+.marquee span{display:inline-block;margin-right:12px;background:#fff;color:var(--ink);border-radius:14px;padding:8px 13px;font-size:14px;font-weight:600;}
+.marquee span em{font-style:normal;color:#f5a400;margin-left:6px;letter-spacing:-1px;}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.search{display:flex;align-items:center;gap:10px;margin-top:18px;background:#fff;color:var(--ink);border-radius:999px;padding:12px 16px;
+  font-family:Prompt;font-weight:600;font-size:14.5px;text-decoration:none;box-shadow:0 8px 20px rgba(0,0,0,.25);}
+.search i{font-style:normal;font-size:18px;}
+.search b{margin-left:auto;font-size:12px;background:var(--ink);color:#fff;border-radius:999px;padding:4px 10px;white-space:nowrap;}
+.links{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.links a{display:flex;align-items:center;gap:9px;padding:12px;border-radius:16px;text-decoration:none;color:#fff;font-weight:600;font-size:14px;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.links a svg{width:22px;height:22px;flex-shrink:0;}
+.links a small{display:block;font-weight:400;font-size:11.5px;opacity:.85;}
+.share2{display:block;width:100%;margin-top:16px;height:52px;border:none;border-radius:16px;background:var(--yellow);color:var(--ink);
+  font-family:Prompt;font-weight:700;font-size:17px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.25);}
+.again{display:block;margin:18px auto 0;border:none;background:none;color:#fff;font:inherit;font-size:14px;text-decoration:underline;opacity:.9;cursor:pointer;}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="bgblur" id="bg"></div>
+<main class="stage" id="stage">
+  <section class="slide" data-bg="hit.webp" data-ms="7000">
+    <div class="fill" style="background-image:url(hit.webp)"></div>
+    <div class="art">
+      <img src="hit.webp" alt="ฮิตติดกระแส ของดีควรมีติด Shelf — พริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา พร้อมรีวิวจากลูกค้า">
+      <div class="shine"></div>
+      <!-- positions are pixels in the 1414×2000 artwork, as % -->
+      <i class="ping h" style="left:24.75%;top:57.85%;--d:0s"></i>
+      <i class="ping h" style="left:93.21%;top:71.75%;--d:.5s"></i>
+      <i class="ping h" style="left:29.92%;top:80.5%;--d:1s"></i>
+      <i class="ping h" style="left:82.04%;top:82.1%;--d:1.5s"></i>
+      <i class="ping l" style="left:21.07%;top:49.6%;--d:.25s"></i>
+      <i class="ping l" style="left:85.79%;top:51.85%;--d:.75s"></i>
+      <i class="ping l" style="left:7.92%;top:63.6%;--d:1.25s"></i>
+      <i class="ping l" style="left:88.76%;top:63.4%;--d:1.75s"></i>
+      <i class="spark" style="left:30%;top:7%;--d:.2s"></i><i class="spark" style="left:86%;top:12%;--d:1.1s;--t:2s"></i>
+      <i class="spark" style="left:7%;top:22%;--d:.7s"></i><i class="spark" style="left:61%;top:3%;--d:1.6s;--t:2.8s"></i>
+      <i class="spark" style="left:93%;top:33%;--d:.4s;--t:2.2s"></i><i class="spark" style="left:18%;top:42%;--d:1.9s"></i>
+      <i class="spark" style="left:50%;top:50%;--d:.9s;--t:2.6s"></i>
+    </div>
+  </section>
+  <section class="slide" data-bg="rare.webp" data-ms="8000">
+    <div class="fill" style="background-image:url(rare.webp)"></div>
+    <div class="art">
+      <img src="rare.webp" alt="ของแรร์คนตามหา — รีวิวจากลูกค้าและคลิปยอดวิวสูงของพริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา Only at 7-Eleven">
+      <div class="shine"></div>
+      <i class="ping e" style="left:26.87%;top:3.3%;--d:0s"></i>
+      <i class="ping e" style="left:6.01%;top:15.75%;--d:.6s"></i>
+      <i class="ping e" style="left:56.58%;top:13.25%;--d:1.2s"></i>
+      <i class="ping h" style="left:67.54%;top:52%;--d:.3s"></i>
+      <i class="ping l" style="left:74.82%;top:52.9%;--d:.9s"></i>
+      <i class="ping h" style="left:80.27%;top:52.35%;--d:1.5s"></i>
+      <i class="spark" style="left:12%;top:4%;--d:.3s"></i><i class="spark" style="left:66%;top:6%;--d:1.2s;--t:2s"></i>
+      <i class="spark" style="left:95%;top:46%;--d:.8s"></i><i class="spark" style="left:40%;top:76%;--d:1.7s;--t:2.8s"></i>
+      <i class="spark" style="left:93%;top:84%;--d:.5s;--t:2.2s"></i>
+    </div>
+  </section>
+  <section class="slide" data-bg="hit.webp" data-ms="0">
+    <div class="cta">
+      <div class="jar" role="img" aria-label="กระปุกพริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา"></div>
+      <h2>ของดีควรมีติด Shelf 🌶️</h2>
+      <p class="sub">พริกผัดน้ำมันมะกอกอัลมอนด์ · Chili Crunch with Almonds in Olive Oil</p>
+      <div class="chip"><span>🏪 Only at 7-Eleven</span><span>⭐ 5/5 จากลูกค้า</span><span>🔥 1.3M views</span></div>
+      <div class="marquee" aria-label="รีวิวจากลูกค้า"><div id="mq"></div></div>
+      <a class="search" id="tiktokSearch" target="_blank" rel="noopener"><i>🔍</i>พริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา<b>ค้นใน TikTok</b></a>
+      <div class="links">
+        <a href="https://www.instagram.com/emocha.official/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#fff"/></svg>
+          <span>Instagram<small>emocha.official</small></span></a>
+        <a href="https://line.me/R/ti/p/@Spunkyfood" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.5 7.3 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.5 1.1-.5 5.9-3.5 8.1-6 1.5-1.6 2.2-3.2 2.2-4.9C22 6.6 17.5 3 12 3z"/></svg>
+          <span>LINE<small>@Spunkyfood</small></span></a>
+        <a id="tiktokLink" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>
+          <span>TikTok<small>เอมโอชา</small></span></a>
+        <a id="fbLink" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.9-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V9c0-.6.4-1 1-1z"/></svg>
+          <span>Facebook<small>เอมโอชา</small></span></a>
+      </div>
+      <button class="share2" id="share2" type="button">📤 แชร์ให้เพื่อน</button>
+      <button class="again" id="again" type="button">↺ ดูอีกครั้ง</button>
+    </div>
+  </section>
+
+  <div class="tapzone prev" id="prev"></div><div class="tapzone next" id="next"></div>
+  <header class="top">
+    <div class="bars" id="bars"></div>
+    <div class="who"><img src="logo.png" alt=""><div><b>emocha.official</b><span>พริกผัดน้ำมันมะกอกอัลมอนด์ · Only at 7-Eleven</span></div></div>
+  </header>
+  <div class="react" id="react"></div>
+  <div class="side">
+    <button id="like" type="button">❤️ <span id="likeN">ถูกใจ</span></button>
+    <button id="share" type="button">📤 แชร์</button>
+    <a id="zoom" href="hit.webp" target="_blank" rel="noopener">🔍 ดูภาพเต็ม</a>
+  </div>
+  <div class="hint" id="hint">แตะขวาเพื่อดูต่อ ›</div>
+</main>
+
+<script>
+(function(){
+'use strict';
+var $ = function(s){ return document.querySelector(s); };
+var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+var KEYWORD = 'พริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา';
+var REVIEWS = [   // word for word from the two artworks
+  'อร่อยจริงค่ะติดมากกก', 'อร่อยมากกก100000/10', 'อร่อยซ้ำบ่อยมาก', 'อร่อยจริง แมสละทีนี้ละหมดเซเว่น', 'อร่อยจนกินมา5วันติดแล้วว',
+  'กินแบบหยุดไม่ได้', 'อร่อยมากครับ ทานหมดหลายกระปุกแล้วครับ', 'เพิ่มของหน่อยยจ้า จะลงแดงแล้ว', 'อร่อยมากกก ซื้อตุน ไว้ติดบ้านหลายกระปุกเลย',
+  'โคตรอร่อยยยย กิน 4 กระปุกแล้ว', 'วันนี้ไปจัดกระปุกที่สองแล้วค่ะ', 'กินบ่อยมากค่า ห้ามเลิกผลิตนะคะ', 'อร่อยแบบ...มาก'
+];
+var row = REVIEWS.map(function(r){ return '<span>“' + r + '”<em>★★★★★</em></span>'; }).join('');
+$('#mq').innerHTML = row + row;
+$('#tiktokSearch').href = 'https://www.tiktok.com/search?q=' + encodeURIComponent(KEYWORD);
+$('#tiktokLink').href = 'https://www.tiktok.com/search/user?q=' + encodeURIComponent('เอมโอชา');
+$('#fbLink').href = 'https://www.facebook.com/search/top?q=' + encodeURIComponent('เอมโอชา');
+
+$('#bars').innerHTML = slides.map(function(){ return '<i><b></b></i>'; }).join('');
+var fills = Array.prototype.slice.call(document.querySelectorAll('#bars b'));
+var cur = -1, t0 = 0, held = 0, paused = false, raf = 0;
+
+function show(i){
+  i = Math.max(0, Math.min(slides.length - 1, i));
+  cur = i; t0 = performance.now(); held = 0;
+  slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+  fills.forEach(function(f, k){ f.style.width = k < i ? '100%' : '0'; });
+  var bg = slides[i].dataset.bg;
+  $('#bg').style.backgroundImage = 'url(' + bg + ')';
+  $('#zoom').href = bg;
+  $('.side').style.display = i < slides.length - 1 ? '' : 'none';   // the last slide has its own buttons
+  if (i > 0) $('#hint').style.opacity = 0;
+}
+function tick(now){
+  var ms = +slides[cur].dataset.ms;
+  if (ms){
+    var el = paused ? held : now - t0;
+    if (paused) t0 = now - held; else held = el;
+    fills[cur].style.width = Math.min(100, el / ms * 100) + '%';
+    if (el >= ms) show(cur + 1);
+  } else fills[cur].style.width = '100%';
+  raf = requestAnimationFrame(tick);
+}
+$('#next').addEventListener('click', function(){ show(cur + 1); });
+$('#prev').addEventListener('click', function(){ show(cur - 1); });
+$('#again').addEventListener('click', function(){ show(0); });
+// hold anywhere on the art to pause, like stories
+var stage = $('#stage');
+stage.addEventListener('pointerdown', function(e){ if (e.target.closest('.tapzone')) paused = true; });
+['pointerup','pointercancel','pointerleave'].forEach(function(ev){ stage.addEventListener(ev, function(){ paused = false; }); });
+// swipe left / right
+var sx = null;
+stage.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, { passive:true });
+stage.addEventListener('touchend', function(e){
+  if (sx === null) return;
+  var dx = e.changedTouches[0].clientX - sx; sx = null;
+  if (Math.abs(dx) > 60) show(cur + (dx < 0 ? 1 : -1));
+}, { passive:true });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'ArrowRight' || e.key === ' ') show(cur + 1);
+  if (e.key === 'ArrowLeft') show(cur - 1);
+});
+
+// floating reactions
+var EMO = ['❤️','😍','🔥','🌶️','👍','😋','💯'];
+var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function burst(n){
+  if (reduce) return;
+  for (var k = 0; k < n; k++) (function(d){
+    setTimeout(function(){
+      var s = document.createElement('span');
+      s.textContent = EMO[Math.floor(Math.random() * EMO.length)];
+      s.style.setProperty('--x', (Math.random() * 70 - 50) + 'px');
+      s.style.setProperty('--r', (Math.random() * 50 - 25) + 'deg');
+      s.style.setProperty('--t', (2.6 + Math.random() * 1.4) + 's');
+      $('#react').appendChild(s);
+      setTimeout(function(){ s.remove(); }, 4200);
+    }, d);
+  })(k * 140);
+}
+setInterval(function(){ if (!document.hidden) burst(1 + Math.floor(Math.random() * 2)); }, 900);
+
+var likes = 0;
+$('#like').addEventListener('click', function(){
+  likes++; burst(6);
+  var b = $('#like'); b.classList.remove('liked'); void b.offsetWidth; b.classList.add('liked');
+  $('#likeN').textContent = likes;
+  if (navigator.vibrate) navigator.vibrate(15);
+});
+function share(){
+  var data = { title:'เอมโอชา · พริกผัดน้ำมันมะกอกอัลมอนด์', text:'ฮิตติดกระแส ของแรร์คนตามหา 🌶️ Only at 7-Eleven', url:location.href.split('#')[0] };
+  if (navigator.share) navigator.share(data).catch(function(){});
+  else if (navigator.clipboard) navigator.clipboard.writeText(data.url).then(function(){ alert('คัดลอกลิงก์แล้ว'); });
+  else prompt('คัดลอกลิงก์นี้', data.url);
+}
+$('#share').addEventListener('click', share);
+$('#share2').addEventListener('click', share);
+
+show(0);
+raf = requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
