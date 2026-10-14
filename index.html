@@ -191,7 +191,7 @@ textarea.fc.sv-open{min-height:64px;}
       <div class="sv-tags" id="svTags"></div>
       <div class="live-box" id="convoLive"></div>
       <div class="clip-box">
-        <div class="clip-hd">หรือใช้คลิปเสียง<small>ได้ยินเสียงลูกค้าชัดกว่า และแยกได้ว่าใครพูด (พนักงาน / ลูกค้า)</small></div>
+        <div class="clip-hd">หรือใช้คลิปเสียง<small>ได้ยินเสียงลูกค้าชัดกว่า และแยกได้ว่าใครพูด (พนักงาน / ลูกค้า) · แปลงเสร็จแล้วบันทึกให้อัตโนมัติ</small></div>
         <div class="clip-btns">
           <button class="mini" id="btnClipRec" type="button">⏺ อัดเสียงเป็นคลิป</button>
           <label class="mini" for="clipFile">📁 อัปโหลดคลิปเสียง</label>
@@ -347,7 +347,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '16 (14 ต.ค. 69)';
+var APP_VERSION = '17 (14 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -1029,14 +1029,14 @@ function setAiStatus(html, kind){
 // Auto-save after a silent auto-stop. Starting the mic again (same customer still talking) or clearing /
 // changing the form cancels it, so nothing is saved twice or onto the next customer.
 var autoSaveTicket = null;
-function armAutoSave(){
+function armAutoSave(why){
   var ticket = autoSaveTicket = { gen: formGen };
   return function(){
     if (autoSaveTicket !== ticket || ticket.gen !== formGen || active) return;
     autoSaveTicket = null;
     if (!formDirty()) return;
     saveLead();
-    toast('💾 บันทึกอัตโนมัติแล้ว (เงียบ ' + cfg.autoStop + ' วิ) — แก้ไขได้ที่ 📋 รายชื่อ', 4000);
+    toast('💾 บันทึกอัตโนมัติแล้ว (' + (why || 'เงียบ ' + cfg.autoStop + ' วิ') + ') — แก้ไขได้ที่ 📋 รายชื่อ', 4000);
   };
 }
 function transcriptText(){
@@ -1134,7 +1134,7 @@ function transcribeClip(blob, name){
       heard.details = (heard.details ? heard.details + ' / ' : '') + '[คลิป ' + name + ']';
       autoExtract(lines.map(function(l){ return l.text; }));
       refreshGot(); renderConvoBtn(); saveDraft();
-      aiRead();
+      aiRead(armAutoSave('จากคลิปเสียง'));
     })
     .catch(function(e){
       clearTimeout(timer); clipBusy = false;
@@ -1150,6 +1150,33 @@ $('#clipFile').addEventListener('change', function(){
   clipInfo('🎧 ' + esc(f.name) + ' (' + (f.size / 1048576).toFixed(1) + ' MB)');
   transcribeClip(f, f.name);
 });
+// Voice-activity check for clip recording. The booth is never truly silent, so "quiet" means the level has
+// stayed near the background-noise floor (tracked as it goes) — not near zero. Stops after cfg.autoStop s.
+var CLIP_VOICE_DB = 12, CLIP_MIN_DB = -55;
+function clipAudioContext(){   // must be created inside the tap, or the browser keeps it paused (no levels)
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC || !cfg.autoStop) return null;
+  try { var c = new AC(); if (c.resume) c.resume(); return c; } catch(e){ return null; }
+}
+function clipQuietWatch(ctx, stream, rec){
+  if (!ctx) return null;
+  var an = ctx.createAnalyser(), buf = new Float32Array(2048), floor = null, heardVoice = false, t0 = Date.now(), lastVoice = t0;
+  an.fftSize = 2048; ctx.createMediaStreamSource(stream).connect(an);
+  var iv = setInterval(function(){
+    an.getFloatTimeDomainData(buf);
+    var sum = 0; for (var i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    var db = 20 * Math.log10(Math.sqrt(sum / buf.length) + 1e-9), now = Date.now();
+    floor = floor === null ? db : (db < floor ? db : floor + 0.04);   // follows the quietest moments, drifts up slowly
+    if (db > CLIP_MIN_DB && db > floor + CLIP_VOICE_DB){ lastVoice = now; heardVoice = true; }
+    var quiet = (now - lastVoice) / 1000;
+    if (heardVoice && quiet >= 3 && clipRec) clipInfo('🤫 เงียบอยู่… จะหยุดอัดและบันทึกให้เองใน ' + Math.max(0, Math.ceil(cfg.autoStop - quiet)) + ' วิ');
+    if (heardVoice && quiet >= cfg.autoStop && now - t0 > (cfg.autoStop + 3) * 1000 && rec.state === 'recording'){
+      toast('จบการสนทนาแล้ว (เงียบ ' + cfg.autoStop + ' วิ) — กำลังแปลงคลิป แล้วจะบันทึกให้อัตโนมัติ', 4000);
+      rec.stop();
+    }
+  }, 250);
+  return { stop:function(){ clearInterval(iv); try { ctx.close(); } catch(e){} } };
+}
 function renderClipBtn(){
   var b = $('#btnClipRec');
   b.classList.toggle('on', !!clipRec);
@@ -1163,6 +1190,7 @@ $('#btnClipRec').addEventListener('click', function(){
   if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     toast('เครื่องนี้อัดเสียงในหน้าเว็บไม่ได้ — ใช้แอปอัดเสียงแล้วกด 📁 อัปโหลดแทน', 4500); return;
   }
+  var actx = clipAudioContext();
   navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:true } }).then(function(stream){
     var rec = new MediaRecorder(stream), chunks = [];
     var track = stream.getAudioTracks()[0];
@@ -1170,6 +1198,7 @@ $('#btnClipRec').addEventListener('click', function(){
     rec.onstop = function(){
       stream.getTracks().forEach(function(t){ t.stop(); });
       clearInterval(clipRec && clipRec.tick);
+      if (clipRec && clipRec.quiet) clipRec.quiet.stop();
       clipRec = null; keepAwake(false); renderClipBtn();
       var type = rec.mimeType || (chunks[0] && chunks[0].type) || 'audio/webm';
       var ext = /mp4|m4a|aac/.test(type) ? 'm4a' : /ogg/.test(type) ? 'ogg' : 'webm';
@@ -1180,11 +1209,13 @@ $('#btnClipRec').addEventListener('click', function(){
       transcribeClip(blob, name);
     };
     rec.start(1000);
-    clipRec = { rec:rec, t0:Date.now(), tick:setInterval(renderClipBtn, 1000) };
+    autoSaveTicket = null;
+    clipRec = { rec:rec, t0:Date.now(), tick:setInterval(renderClipBtn, 1000), quiet:clipQuietWatch(actx, stream, rec) };
     keepAwake(true); renderClipBtn();
-    clipInfo('🔴 กำลังอัด… ไมค์: ' + esc((track && track.label) || 'ไมค์ของเครื่อง') + ' — คุยกับลูกค้าตามปกติ แล้วกดหยุดอัด');
+    clipInfo('🔴 กำลังอัด… ไมค์: ' + esc((track && track.label) || 'ไมค์ของเครื่อง') + ' — คุยกับลูกค้าตามปกติ ' +
+      (cfg.autoStop ? 'คุยจบแล้วเงียบ ' + cfg.autoStop + ' วิ ระบบจะหยุดอัดและบันทึกให้เอง (หรือกดหยุดอัดได้เลย)' : 'แล้วกดหยุดอัด'));
     if (navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
-  }).catch(function(){ toast('ไม่ได้รับอนุญาตใช้ไมโครโฟน'); });
+  }).catch(function(){ if (actx) try { actx.close(); } catch(e){} toast('ไม่ได้รับอนุญาตใช้ไมโครโฟน'); });
 });
 
 function toggleRec(f){ if (active && active.field === f) stopRec(); else startRec(f); }
