@@ -30,12 +30,6 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
 .art img{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:0;}
 .slide.on .art{animation:breathe 7s ease-in-out infinite alternate;}
 @keyframes breathe{from{transform:scale(1)}to{transform:scale(1.035)}}
-.shine{position:absolute;inset:0;overflow:hidden;pointer-events:none;mix-blend-mode:screen;}
-.shine::before{content:'';position:absolute;top:-20%;bottom:-20%;width:38%;left:-60%;
-  background:linear-gradient(100deg,transparent,rgba(255,255,255,.0) 30%,rgba(255,250,210,.42) 50%,rgba(255,255,255,0) 70%,transparent);
-  transform:skewX(-14deg);}
-.slide.on .shine::before{animation:sweep 3.6s cubic-bezier(.4,0,.2,1) .5s infinite;}
-@keyframes sweep{0%{left:-60%}55%,100%{left:130%}}
 /* each comment bubble, cut from the same artwork pixels and placed exactly over itself, zooms in and out in turn */
 .art .pop{position:absolute;inset:auto;height:auto;z-index:1;pointer-events:none;transform-origin:50% 50%;will-change:transform;}
 .slide.on .art .pop{animation:bubble var(--cycle) ease-in-out infinite;animation-delay:var(--d);}
@@ -116,7 +110,6 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
     <div class="fill" style="background-image:url(hit.webp)"></div>
     <div class="art">
       <img src="hit.webp" alt="ฮิตติดกระแส ของดีควรมีติด Shelf — พริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา พร้อมรีวิวจากลูกค้า">
-      <div class="shine"></div>
       <img class="pop" src="zoom/h1.webp" alt="" style="left:4.455%;top:47.75%;width:22.984%;--d:0.0s;--cycle:6.0s">
       <img class="pop" src="zoom/h2.webp" alt="" style="left:70.297%;top:49.2%;width:20.297%;--d:1.0s;--cycle:6.0s">
       <img class="pop" src="zoom/h3.webp" alt="" style="left:5.304%;top:61.4%;width:21.924%;--d:2.0s;--cycle:6.0s">
@@ -134,7 +127,6 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
     <div class="fill" style="background-image:url(rare.webp)"></div>
     <div class="art">
       <img src="rare.webp" alt="ของแรร์คนตามหา — รีวิวจากลูกค้าและคลิปยอดวิวสูงของพริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา Only at 7-Eleven">
-      <div class="shine"></div>
       <img class="pop" src="zoom/r1.webp" alt="" style="left:61.81%;top:6.95%;width:34.229%;--d:0.0s;--cycle:7.0s">
       <img class="pop" src="zoom/r2.webp" alt="" style="left:13.013%;top:20.1%;width:37.482%;--d:1.0s;--cycle:7.0s">
       <img class="pop" src="zoom/r3.webp" alt="" style="left:56.931%;top:18.05%;width:37.482%;--d:2.0s;--cycle:7.0s">
