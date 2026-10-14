@@ -37,7 +37,8 @@ body:not(.manual) .manual-only{display:none!important;}
 .card{background:#fff;border-radius:20px;box-shadow:0 4px 18px rgba(150,80,0,.08);margin-bottom:14px;}
 .bd{padding:16px 18px;}
 .warn{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;line-height:1.5;}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.tabs{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:14px;}
+.tabs a{display:flex;align-items:center;justify-content:center;height:44px;padding:0 14px;border-radius:14px;border:1.5px solid #f3e3cf;background:#fff;font-size:15px;font-weight:600;color:var(--g8);text-decoration:none;white-space:nowrap;}
 .tabs button{height:44px;border-radius:14px;border:1.5px solid #f3e3cf;background:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;color:var(--g8);}
 .tabs button.on{border-color:var(--gm);background:var(--gp);color:var(--gd);}
 .tip summary{font-size:14px;font-weight:600;color:var(--gd);cursor:pointer;}
@@ -175,6 +176,7 @@ textarea.fc.sv-open{min-height:64px;}
   <div class="tabs">
     <button data-tab="capture" class="on">➕ บันทึกลูกค้า</button>
     <button data-tab="list">📋 รายชื่อ (<span id="cnt">0</span>)</button>
+    <a href="dashboard.html" title="สรุปความคิดเห็นทั้งหมด (QR + LINE)">📊 สรุป</a>
   </div>
 
   <!-- ===== บันทึก ===== -->
@@ -345,7 +347,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '14 (14 ต.ค. 69)';
+var APP_VERSION = '15 (14 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
