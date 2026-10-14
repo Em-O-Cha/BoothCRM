@@ -22,6 +22,8 @@ Supabase Edge Function `booth-line` (repo Em-O-Cha/Order) ตรวจลาย�
 
 คำสั่งในแชท: ข้อความทั่วไป = ลูกค้าใหม่ · `+ ข้อความ` = เพิ่มให้คนล่าสุด · `ลบ` · `ล่าสุด` · `งาน: ชื่องาน` · `ชีต` · `วิธีใช้`
 
+โค้ดที่ใช้งานจริงในชีตแก้ผ่าน clasp ที่ repo Em-O-Cha/apps-script โฟลเดอร์ `booth-crm` (ไฟล์ในโฟลเดอร์ `apps-script/` ที่นี่เป็นสำเนาสำหรับติดตั้งชีตใหม่)
+
 ตั้งค่า: วาง `apps-script/BoothCRM.gs` ในชีต (ใส่ SECRET) แล้ว Deploy เป็นเว็บแอป (Execute as: Me, Access: Anyone)
 (ชีตเวอร์ชัน 3: คอลัมน์ "เหตุผลที่ไม่มีสินค้า" แทน "โปรที่เคยทำ" — เว็บแอปย้ายข้อมูลเดิมให้เองครั้งแรกที่ถูกเรียก)
 แล้วตั้ง secrets ของ Supabase: `BOOTH_LINE_CHANNEL_SECRET`, `BOOTH_LINE_ACCESS_TOKEN`, `BOOTH_SHEET_URL`, `BOOTH_SHEET_SECRET`
