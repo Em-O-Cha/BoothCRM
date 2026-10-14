@@ -118,6 +118,7 @@ textarea.in{height:auto;min-height:88px;padding:12px 14px;line-height:1.5;resize
 // next to the leads staff send through LINE. Answer keys and choices match the staff page (index.html) where they overlap.
 var SEND_URL = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/booth-survey';
 var OTHER = 'อื่น ๆ';
+var DONT_KNOW = 'ไม่รู้';   // in a pick-several question it stands alone: picking it clears the others and vice versa
 
 // one: pick one answer · multi: pick any · showIf: only after the given answer (hasProduct decides Q6)
 var QS = [
@@ -126,11 +127,11 @@ var QS = [
   { k:'type', q:'สาขาของคุณเป็นแบบใด', opts:['แฟรนไชส์','คอร์ปอเรท'] },
   { k:'hasProduct', q:'ที่สาขามีสินค้าของเอมโอชาหรือไม่', opts:['มี','ไม่มี'] },
   { k:'noReason', q:'เหตุผลที่ยังไม่มีสินค้าเอมโอชา', multi:true, showIf:'ไม่มี',
-    opts:['ไม่รู้จักสินค้าเอมโอชา','เคยสั่งแล้วขายไม่ดี','ไม่รู้ช่องทางสั่งซื้อ', OTHER] },
-  { k:'refill', q:'สั่งเติมสินค้าเอมโอชาบ่อยแค่ไหน', opts:['บ่อย','นาน ๆ ครั้ง','ไม่ค่อยเติม'], showIf:'มี' },
-  { k:'inquiry', q:'มีลูกค้ามาสอบถามสินค้าเอมโอชาบ้างไหม', opts:['ถามบ่อย','มีบ้าง','ไม่มีคนถาม'] },
+    opts:['ไม่รู้จักสินค้าเอมโอชา','เคยสั่งแล้วขายไม่ดี','ไม่รู้ช่องทางสั่งซื้อ', OTHER, DONT_KNOW] },
+  { k:'refill', q:'สั่งเติมสินค้าเอมโอชาบ่อยแค่ไหน', opts:['บ่อย','นาน ๆ ครั้ง','ไม่ค่อยเติม', DONT_KNOW], showIf:'มี' },
+  { k:'inquiry', q:'มีลูกค้ามาสอบถามสินค้าเอมโอชาบ้างไหม', opts:['ถามบ่อย','มีบ้าง','ไม่มีคนถาม', DONT_KNOW] },
   { k:'promoWish', q:'อยากให้เอมโอชาช่วยโปรโมตแบบไหนบ้าง', multi:true,
-    opts:['ป้าย / สื่อ ณ จุดขาย','ให้ลูกค้าชิมสินค้าหน้าร้าน','โปรลดราคา','ซื้อ 1 แถม 1 / ซื้อคู่ถูกกว่า','ของแถม / ของพรีเมียม','โพสต์ / รีวิวบนโซเชียล', OTHER] },
+    opts:['ป้าย / สื่อ ณ จุดขาย','ให้ลูกค้าชิมสินค้าหน้าร้าน','โปรลดราคา','ซื้อ 1 แถม 1 / ซื้อคู่ถูกกว่า','ของแถม / ของพรีเมียม','โพสต์ / รีวิวบนโซเชียล', OTHER, DONT_KNOW] },
   { k:'goodPromo', q:'โปรไหนที่สาขาทำแล้วช่วยเพิ่มยอดขายได้ดี', multi:true,
     opts:['ลดราคา','ซื้อ 1 แถม 1 / ซื้อคู่ถูกกว่า','ของแถม','จัดเซ็ต / คอมโบ','สะสมแต้ม','ให้ชิมหน้าร้าน', OTHER] }
 ];
@@ -191,7 +192,10 @@ function refresh(){
 $('#qs').addEventListener('click', function(e){
   var b = e.target.closest('.opt'); if (!b) return;
   var Q = QS.filter(function(x){ return x.k === b.dataset.k; })[0], v = b.dataset.v, arr = picked[Q.k], i = arr.indexOf(v);
-  if (Q.multi){ if (i >= 0) arr.splice(i, 1); else arr.push(v); }
+  if (Q.multi){
+    if (i >= 0) arr.splice(i, 1);
+    else picked[Q.k] = v === DONT_KNOW ? [v] : arr.filter(function(x){ return x !== DONT_KNOW; }).concat(v);
+  }
   else picked[Q.k] = i >= 0 ? [] : [v];
   refresh();
   if (v === OTHER && picked[Q.k].indexOf(OTHER) >= 0) $('#o-' + Q.k).focus();
