@@ -1166,7 +1166,9 @@ function clipQuietWatch(ctx, stream, rec){
     an.getFloatTimeDomainData(buf);
     var sum = 0; for (var i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
     var db = 20 * Math.log10(Math.sqrt(sum / buf.length) + 1e-9), now = Date.now();
-    floor = floor === null ? db : (db < floor ? db : floor + 0.04);   // follows the quietest moments, drifts up slowly
+    if (db < -90) return;   // mic not delivering yet (all zeros) — don't let that set the noise floor
+    // background-noise floor: drops to the quietest level at once, creeps up toward the current level (~25 s)
+    floor = floor === null ? db : (db < floor ? db : floor + (db - floor) * 0.01);
     if (db > CLIP_MIN_DB && db > floor + CLIP_VOICE_DB){ lastVoice = now; heardVoice = true; }
     var quiet = (now - lastVoice) / 1000;
     if (heardVoice && quiet >= 3 && clipRec) clipInfo('🤫 เงียบอยู่… จะหยุดอัดและบันทึกให้เองใน ' + Math.max(0, Math.ceil(cfg.autoStop - quiet)) + ' วิ');
