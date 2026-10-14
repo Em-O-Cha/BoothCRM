@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1c1a17">
+<title>แสดงความคิดเห็น — เอมโอชา</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c1a17; --ink2:#4a443b; --mute:#8a8174; --line:#ece4d4;
+  --bg:#faf6ee; --card:#fff; --gold:#d9a520; --gold2:#f5c94a; --gold-soft:#fdf3d6; --ok:#1f9d6b;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+.hero{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 85% 0%,#3b3220 0%,#1c1a17 60%);color:#fff;
+  padding:28px 20px 64px;text-align:center;}
+.hero::before,.hero::after{content:'';position:absolute;border-radius:50%;filter:blur(2px);opacity:.35;}
+.hero::before{width:220px;height:220px;right:-70px;top:-80px;background:radial-gradient(circle,var(--gold2),transparent 70%);}
+.hero::after{width:180px;height:180px;left:-60px;bottom:-90px;background:radial-gradient(circle,var(--gold),transparent 70%);}
+.logo{position:relative;width:92px;height:auto;filter:drop-shadow(0 6px 18px rgba(0,0,0,.45));}
+.hero h1{position:relative;font-family:'Prompt',sans-serif;font-weight:700;font-size:24px;margin-top:12px;letter-spacing:.2px;
+  background:linear-gradient(90deg,#fff3c4,var(--gold2) 45%,#e8b030);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero p{position:relative;font-size:14px;color:#d9d2c3;margin-top:6px;line-height:1.55;}
+.evt{position:relative;display:inline-block;margin-top:12px;font-size:12.5px;color:#fff3c4;border:1px solid rgba(245,201,74,.45);
+  border-radius:999px;padding:4px 12px;background:rgba(245,201,74,.08);}
+.evt:empty{display:none;}
+.wrap{max-width:520px;margin:-40px auto 0;padding:0 16px 40px;position:relative;}
+.progress{background:var(--card);border-radius:16px;padding:12px 16px;box-shadow:0 6px 24px rgba(60,40,0,.08);margin-bottom:14px;
+  display:flex;align-items:center;gap:12px;font-size:13px;color:var(--mute);}
+.bar{flex:1;height:8px;background:#f1ead9;border-radius:99px;overflow:hidden;}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;transition:width .35s ease;}
+.progress b{color:var(--ink);font-weight:600;white-space:nowrap;}
+.q{background:var(--card);border-radius:18px;padding:16px 16px 14px;margin-bottom:12px;box-shadow:0 2px 12px rgba(60,40,0,.05);
+  border:1.5px solid transparent;transition:border-color .2s, box-shadow .2s;}
+.q.done{border-color:#f0dca0;}
+.q[hidden]{display:none;}
+.q.reveal{animation:rise .35s ease;}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.q-hd{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
+.num{flex-shrink:0;width:28px;height:28px;border-radius:9px;background:var(--gold-soft);color:#9a6f00;font-family:'Prompt',sans-serif;
+  font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;}
+.q.done .num{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;}
+.q-hd label{font-size:15.5px;font-weight:600;line-height:1.45;padding-top:2px;}
+.q-hd small{display:block;font-weight:400;font-size:12.5px;color:var(--mute);margin-top:1px;}
+.opts{display:flex;flex-wrap:wrap;gap:8px;}
+.opt{min-height:46px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fdfbf7;font:inherit;font-size:15px;color:var(--ink);
+  cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-align:left;line-height:1.35;transition:background .15s,border-color .15s,box-shadow .15s;
+  -webkit-tap-highlight-color:transparent;}
+.opt::before{content:'';width:16px;height:16px;flex-shrink:0;border-radius:50%;border:1.5px solid #cdbf9f;background:#fff;transition:all .15s;}
+.multi .opt::before{border-radius:5px;}
+.opt.on{background:linear-gradient(135deg,#fbe39a,var(--gold2));border-color:var(--gold);font-weight:600;box-shadow:0 4px 12px rgba(217,165,32,.28);}
+.opt.on::before{border-color:#1c1a17;background:#1c1a17 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.6 2.6L12 5.6' fill='none' stroke='%23f5c94a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat;}
+.opt:active{transform:scale(.97);}
+.multi-hint{font-size:12px;color:var(--mute);margin:-4px 0 8px 38px;}
+.in{width:100%;height:52px;border:1.5px solid var(--line);border-radius:13px;background:#fdfbf7;font:inherit;font-size:16px;color:var(--ink);
+  padding:0 14px;-webkit-appearance:none;appearance:none;transition:border-color .15s, background .15s;}
+textarea.in{height:auto;min-height:88px;padding:12px 14px;line-height:1.5;resize:vertical;}
+.in:focus{outline:none;border-color:var(--gold);background:#fff;box-shadow:0 0 0 4px rgba(217,165,32,.15);}
+.other{margin-top:8px;}
+.other[hidden]{display:none;}
+.submit{width:100%;height:58px;border:none;border-radius:16px;font-family:'Prompt',sans-serif;font-size:18px;font-weight:600;cursor:pointer;
+  color:#1c1a17;background:linear-gradient(135deg,#f7d56a,var(--gold) 70%);box-shadow:0 10px 24px rgba(217,165,32,.35);margin-top:6px;
+  transition:transform .1s, opacity .2s;}
+.submit:active{transform:scale(.98);}
+.submit:disabled{opacity:.6;}
+.fine{text-align:center;font-size:12px;color:var(--mute);margin-top:12px;line-height:1.6;}
+.err{background:#fff1f0;color:#b42318;border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:10px;line-height:1.5;}
+.err[hidden]{display:none;}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;}
+.thanks{text-align:center;background:var(--card);border-radius:22px;padding:34px 22px 26px;box-shadow:0 10px 30px rgba(60,40,0,.1);}
+.thanks[hidden]{display:none;}
+.check{width:78px;height:78px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(135deg,var(--gold2),var(--gold));display:flex;
+  align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(217,165,32,.4);animation:pop .5s cubic-bezier(.2,1.4,.4,1);}
+.check svg{width:40px;height:40px;}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.thanks h2{font-family:'Prompt',sans-serif;font-size:22px;}
+.thanks p{color:var(--ink2);font-size:14.5px;line-height:1.6;margin-top:8px;}
+.again{margin-top:18px;height:44px;padding:0 18px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:14px;
+  color:var(--ink2);cursor:pointer;}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <img class="logo" src="logo.png" alt="เอมโอชา Em-O-Cha">
+  <h1>ร่วมแสดงความคิดเห็น</h1>
+  <p>ใช้เวลาไม่ถึง 1 นาที · ตอบเฉพาะข้อที่สะดวก<br>ทุกคำตอบช่วยให้เราดูแลสาขาของคุณได้ดีขึ้น</p>
+  <span class="evt" id="evt"></span>
+</header>
+
+<main class="wrap">
+  <form id="form" novalidate>
+    <div class="progress"><div class="bar"><i id="bar"></i></div><b id="prog">0/7 ข้อ</b></div>
+    <div id="qs"></div>
+    <input class="hp" id="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button class="submit" id="btnSend" type="submit">ส่งความคิดเห็น</button>
+    <div class="err" id="err" hidden></div>
+    <p class="fine">ไม่ต้องตอบครบทุกข้อ · ข้อมูลใช้เพื่อพัฒนาสินค้าและการสนับสนุนสาขาเท่านั้น</p>
+  </form>
+
+  <section class="thanks" id="thanks" hidden>
+    <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h2>ขอบคุณค่ะ 🙏</h2>
+    <p>เอมโอชาได้รับความคิดเห็นของคุณแล้ว<br>ขอบคุณที่สละเวลาร่วมแสดงความคิดเห็น</p>
+    <button class="again" id="btnAgain" type="button">แสดงความคิดเห็นอีกครั้ง (คนถัดไป)</button>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+// Answers go to Supabase function booth-survey (repo Em-O-Cha/Order), which adds a row to the BoothCRM Google Sheet
+// next to the leads staff send through LINE. Answer keys and choices match the staff page (index.html) where they overlap.
+var SEND_URL = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/booth-survey';
+var OTHER = 'อื่น ๆ';
+
+// one: pick one answer · multi: pick any · showIf: only after the given answer (hasProduct decides Q6)
+var QS = [
+  { k:'name', q:'ชื่อของคุณ', hint:'ชื่อเล่นก็ได้', text:true, ph:'เช่น คุณสมชาย' },
+  { k:'branch', q:'สาขา / ร้านของคุณ', hint:'ชื่อสาขาหรือย่านที่ตั้ง', text:true, ph:'เช่น สาขาลาดพร้าว' },
+  { k:'type', q:'สาขาของคุณเป็นแบบใด', opts:['แฟรนไชส์','คอร์ปอเรท'] },
+  { k:'hasProduct', q:'ที่สาขามีสินค้าของเอมโอชาหรือไม่', opts:['มี','ไม่มี'] },
+  { k:'noReason', q:'เหตุผลที่ยังไม่มีสินค้าเอมโอชา', multi:true, showIf:'ไม่มี',
+    opts:['ไม่รู้จักสินค้าเอมโอชา','เคยสั่งแล้วขายไม่ดี','ไม่รู้ช่องทางสั่งซื้อ', OTHER] },
+  { k:'refill', q:'สั่งเติมสินค้าเอมโอชาบ่อยแค่ไหน', opts:['บ่อย','นาน ๆ ครั้ง','ไม่ค่อยเติม'], showIf:'มี' },
+  { k:'inquiry', q:'มีลูกค้ามาสอบถามสินค้าเอมโอชาบ้างไหม', opts:['ถามบ่อย','มีบ้าง','ไม่มีคนถาม'] },
+  { k:'promoWish', q:'อยากให้เอมโอชาช่วยโปรโมตแบบไหนบ้าง', multi:true,
+    opts:['ป้าย / สื่อ ณ จุดขาย','ให้ลูกค้าชิมสินค้าหน้าร้าน','โปรลดราคา','ซื้อ 1 แถม 1 / ซื้อคู่ถูกกว่า','ของแถม / ของพรีเมียม','โพสต์ / รีวิวบนโซเชียล', OTHER] },
+  { k:'goodPromo', q:'โปรไหนที่สาขาทำแล้วช่วยเพิ่มยอดขายได้ดี', multi:true,
+    opts:['ลดราคา','ซื้อ 1 แถม 1 / ซื้อคู่ถูกกว่า','ของแถม','จัดเซ็ต / คอมโบ','สะสมแต้ม','ให้ชิมหน้าร้าน', OTHER] }
+];
+
+function $(s){ return document.querySelector(s); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+var params = new URLSearchParams(location.search);
+var EVENT = (params.get('e') || params.get('event') || '').slice(0, 80);
+if (EVENT) $('#evt').textContent = '📍 ' + EVENT;
+
+var picked = {};   // k -> array of chosen options
+$('#qs').innerHTML = QS.map(function(Q){
+  var head = '<div class="q-hd"><span class="num"></span><label' + (Q.text ? ' for="q-' + Q.k + '"' : '') + '>' + esc(Q.q) +
+    (Q.hint ? '<small>' + esc(Q.hint) + '</small>' : '') + '</label></div>';
+  var body;
+  if (Q.text) body = '<input class="in" id="q-' + Q.k + '" maxlength="80" autocomplete="off" placeholder="' + esc(Q.ph) + '">';
+  else {
+    picked[Q.k] = [];
+    body = (Q.multi ? '<div class="multi-hint">เลือกได้มากกว่า 1 ข้อ</div>' : '') +
+      '<div class="opts' + (Q.multi ? ' multi' : '') + '" role="' + (Q.multi ? 'group' : 'radiogroup') + '">' +
+      Q.opts.map(function(o){ return '<button type="button" class="opt" data-k="' + Q.k + '" data-v="' + esc(o) + '" aria-pressed="false">' +
+        esc(o === OTHER ? 'อื่น ๆ (ระบุ)' : o) + '</button>'; }).join('') + '</div>' +
+      (Q.opts.indexOf(OTHER) >= 0 ? '<input class="in other" id="o-' + Q.k + '" maxlength="200" placeholder="พิมพ์คำตอบของคุณ" hidden>' : '');
+  }
+  return '<div class="q" data-k="' + Q.k + '">' + head + body + '</div>';
+}).join('');
+
+function val(Q){
+  if (Q.text) return $('#q-' + Q.k).value.trim();
+  return picked[Q.k].map(function(v){
+    if (v !== OTHER) return v;
+    var o = $('#o-' + Q.k).value.trim(); return o ? 'อื่น ๆ: ' + o : 'อื่น ๆ';
+  }).join(', ');
+}
+function visible(Q){ return !Q.showIf || picked.hasProduct[0] === Q.showIf; }
+function refresh(){
+  var shown = 0, done = 0;
+  QS.forEach(function(Q){
+    var box = document.querySelector('.q[data-k="' + Q.k + '"]'), on = visible(Q);
+    if (box.hidden && on) box.classList.add('reveal');
+    box.hidden = !on;
+    if (!on) return;
+    shown++;
+    box.querySelector('.num').textContent = shown;
+    if (!Q.text){
+      box.querySelectorAll('.opt').forEach(function(b){
+        var sel = picked[Q.k].indexOf(b.dataset.v) >= 0;
+        b.classList.toggle('on', sel); b.setAttribute('aria-pressed', sel);
+      });
+      var o = $('#o-' + Q.k); if (o) o.hidden = picked[Q.k].indexOf(OTHER) < 0;
+    }
+    var has = !!val(Q); box.classList.toggle('done', has); if (has) done++;
+  });
+  $('#bar').style.width = (shown ? done / shown * 100 : 0) + '%';
+  $('#prog').textContent = done + '/' + shown + ' ข้อ';
+}
+$('#qs').addEventListener('click', function(e){
+  var b = e.target.closest('.opt'); if (!b) return;
+  var Q = QS.filter(function(x){ return x.k === b.dataset.k; })[0], v = b.dataset.v, arr = picked[Q.k], i = arr.indexOf(v);
+  if (Q.multi){ if (i >= 0) arr.splice(i, 1); else arr.push(v); }
+  else picked[Q.k] = i >= 0 ? [] : [v];
+  refresh();
+  if (v === OTHER && picked[Q.k].indexOf(OTHER) >= 0) $('#o-' + Q.k).focus();
+});
+$('#qs').addEventListener('input', refresh);
+refresh();
+
+$('#form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var a = {};
+  QS.forEach(function(Q){ a[Q.k] = visible(Q) ? val(Q) : ''; });
+  var err = $('#err'); err.hidden = true;
+  if (!QS.some(function(Q){ return a[Q.k]; })){ err.hidden = false; err.textContent = 'กรุณาตอบอย่างน้อย 1 ข้อ'; return; }
+  var btn = $('#btnSend'); btn.disabled = true; btn.textContent = 'กำลังส่ง…';
+  var survey = {};
+  ['type','hasProduct','noReason','refill','inquiry','promoWish','goodPromo'].forEach(function(k){ survey[k] = a[k]; });
+  fetch(SEND_URL, { method:'POST', headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify({ event:EVENT, name:a.name, branch:a.branch, survey:survey, website:$('#hp').value }) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || !res.success) throw new Error((res && res.error) || '');
+      $('#form').hidden = true; $('#thanks').hidden = false; window.scrollTo({ top:0, behavior:'smooth' });
+    })
+    .catch(function(x){
+      err.hidden = false;
+      err.textContent = 'ส่งไม่สำเร็จ' + (x && x.message ? ' (' + x.message + ')' : '') + ' — ตรวจสัญญาณอินเทอร์เน็ตแล้วกดส่งอีกครั้ง';
+    })
+    .then(function(){ btn.disabled = false; btn.textContent = 'ส่งความคิดเห็น'; });
+});
+
+$('#btnAgain').addEventListener('click', function(){
+  $('#form').reset(); Object.keys(picked).forEach(function(k){ picked[k] = []; }); refresh();
+  $('#thanks').hidden = true; $('#form').hidden = false; window.scrollTo({ top:0 });
+});
+})();
+</script>
+</body>
+</html>

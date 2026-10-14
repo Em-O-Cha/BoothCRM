@@ -2,6 +2,7 @@
  * BoothCRM — เก็บลูกค้าหน้าบูธที่พนักงานส่งเข้า LINE OA ลงในชีตนี้
  *
  * LINE OA -> Supabase Edge Function booth-line (ตรวจลายเซ็น LINE + ให้ Claude แยกข้อมูล) -> Web App นี้ -> ชีต "ลูกค้า"
+ * ลูกค้าสแกน QR (survey.html) -> Supabase Edge Function booth-survey -> Web App นี้ -> ชีต "ลูกค้า" (ผู้บันทึก = ลูกค้า (QR))
  *
  * ติดตั้ง (ครั้งเดียว):
  *   1. เปิดชีต BoothCRM -> ส่วนขยาย (Extensions) -> Apps Script -> ลบโค้ดเดิม แล้ววางไฟล์นี้ -> บันทึก
@@ -11,14 +12,15 @@
  *   แก้โค้ดภายหลัง: Deploy -> จัดการการทำให้ใช้งานได้ -> แก้ไข (ดินสอ) -> เวอร์ชัน: เวอร์ชันใหม่ -> ทำให้ใช้งานได้ (URL เดิม)
  */
 var SECRET = '__BOOTH_SHEET_SECRET__';
-var VERSION = 2;
+var VERSION = 3;
 
 var LEADS = 'ลูกค้า';
 var STAFF = 'พนักงาน';
-var SURVEY_KEYS = ['type', 'hasProduct', 'refill', 'inquiry', 'promoWish', 'pastPromo', 'goodPromo'];
+// คำถาม "แสดงความคิดเห็น" ชุดใหม่ (ต.ค. 69) — เหตุผลที่ไม่มีสินค้า แทนที่ "โปรที่เคยทำ" (ย้ายข้อมูลเดิมไปหมายเหตุใน migrateV3_)
+var SURVEY_KEYS = ['type', 'hasProduct', 'noReason', 'refill', 'inquiry', 'promoWish', 'goodPromo'];
 var HEAD = ['วันที่เวลา', 'รหัส', 'ผู้บันทึก', 'งาน', 'ชื่อ', 'เบอร์โทร', 'เจ้าของสาขา',
-  'คอร์ปอเรท/แฟรนไชส์', 'มีสินค้าเอมโอชา', 'เติมสินค้าบ่อยไหม', 'มีคนมาถามไหม',
-  'อยากให้ช่วยโปรโมต', 'โปรที่เคยทำ', 'โปรที่ได้ผลดี', 'สรุป', 'ข้อความที่ส่งมา', 'หมายเหตุ', 'LINE user'];
+  'คอร์ปอเรท/แฟรนไชส์', 'มีสินค้าเอมโอชา', 'เหตุผลที่ไม่มีสินค้า', 'เติมสินค้าบ่อยไหม', 'มีคนมาถามไหม',
+  'อยากให้ช่วยโปรโมต', 'โปรที่ได้ผลดี', 'สรุป', 'ข้อความที่ส่งมา', 'หมายเหตุ', 'LINE user'];
 var COL = { created: 1, id: 2, staff: 3, event: 4, name: 5, phone: 6, branch: 7, survey: 8, summary: 15, raw: 16, note: 17, uid: 18 };
 var STAFF_HEAD = ['LINE user', 'ชื่อใน LINE', 'งานปัจจุบัน', 'อัปเดตล่าสุด'];
 var LATEST_SCAN_ROWS = 300;
@@ -31,8 +33,9 @@ function doPost(e) {
   // so one slow Google call can't hold every other message up.
   var lock = (req.action === 'update' || req.action === 'delete') ? LockService.getScriptLock() : null;
   try {
-    if (lock && !lock.tryLock(15000)) return out_({ success: false, error: 'ชีตกำลังยุ่ง ลองใหม่อีกครั้ง' });
     setup_();
+    if (needsV3_() && !migrateV3_()) return out_({ success: false, error: 'ชีตกำลังปรับคอลัมน์ ลองใหม่อีกครั้ง' });
+    if (lock && !lock.tryLock(15000)) return out_({ success: false, error: 'ชีตกำลังยุ่ง ลองใหม่อีกครั้ง' });
     var r;
     switch (req.action) {
       case 'append': r = append_(req.lead || {}, req.staff); break;
@@ -40,7 +43,7 @@ function doPost(e) {
       case 'latest': r = latest_(String(req.lineUserId || ''), Number(req.withinMinutes) || 120); break;
       case 'delete': r = remove_(String(req.id || ''), String(req.lineUserId || '')); break;
       case 'staff': r = staff_(String(req.lineUserId || ''), req.displayName, req.event); break;
-      case 'ping': r = { url: SpreadsheetApp.getActive().getUrl(), version: VERSION }; break;
+      case 'ping': r = { url: SpreadsheetApp.getActive().getUrl(), version: VERSION, head: HEAD }; break;
       default: return out_({ success: false, error: 'ไม่รู้จักคำสั่ง' });
     }
     return out_({ success: true, result: r });
@@ -74,6 +77,37 @@ function setup_() {
     st.getRange(1, 1, 1, STAFF_HEAD.length).setValues([STAFF_HEAD]).setFontWeight('bold').setBackground('#e8f5e9');
     st.setFrozenRows(1);
     st.getRange(2, 1, st.getMaxRows() - 1, STAFF_HEAD.length).setNumberFormat('@');
+  }
+}
+
+// v2 -> v3: the 7 survey columns H..N change from type, hasProduct, refill, inquiry, promoWish, pastPromo, goodPromo
+// to type, hasProduct, noReason, refill, inquiry, promoWish, goodPromo. Rows keep their answers; any old
+// "โปรที่เคยทำ" answer moves into หมายเหตุ so nothing is lost. Runs once, under the script lock.
+var V2_PAST_PROMO_COL = 13;
+function needsV3_() {
+  return String(leadsSheet_().getRange(1, V2_PAST_PROMO_COL).getValue()) === 'โปรที่เคยทำ';
+}
+function migrateV3_() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return false;
+  try {
+    if (!needsV3_()) return true;
+    var sh = leadsSheet_(), n = sh.getLastRow() - 1;
+    if (n > 0) {
+      var sv = sh.getRange(2, COL.survey, n, SURVEY_KEYS.length).getValues();
+      var notes = sh.getRange(2, COL.note, n, 1).getValues();
+      sv = sv.map(function (r, i) {
+        var past = String(r[5] || '').trim();
+        if (past) notes[i][0] = (notes[i][0] ? notes[i][0] + ' · ' : '') + 'โปรที่เคยทำ: ' + past;
+        return [r[0], r[1], '', r[2], r[3], r[4], r[6]];
+      });
+      sh.getRange(2, COL.survey, n, SURVEY_KEYS.length).setValues(sv);
+      sh.getRange(2, COL.note, n, 1).setValues(notes);
+    }
+    sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]);
+    return true;
+  } finally {
+    lock.releaseLock();
   }
 }
 
