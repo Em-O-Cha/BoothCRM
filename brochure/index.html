@@ -50,9 +50,6 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
 .who div{font-size:13.5px;line-height:1.2;text-shadow:0 1px 3px rgba(0,0,0,.6);}
 .who b{font-family:Prompt;font-weight:600;}
 .who span{display:block;font-size:11.5px;opacity:.85;}
-.stage.light .top{background:linear-gradient(#fffaf2 78%,rgba(255,250,242,0));}
-.stage.light .bars i{background:rgba(0,0,0,.12);} .stage.light .bars i b{background:var(--ink);}
-.stage.light .who div{color:var(--ink);text-shadow:none;}
 .tapzone{position:absolute;top:0;bottom:0;z-index:10;}
 .tapzone.prev{left:0;width:32%;} .tapzone.next{right:0;width:68%;}
 .side{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:25;display:flex;gap:10px;justify-content:center;}
@@ -71,32 +68,37 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
   100%{transform:translate(calc(-50% + var(--x,0px)),-55vh) scale(.9) rotate(var(--r,0deg));opacity:0}}
 /* ---------- final slide: call to action ---------- */
 .cta{position:absolute;inset:0;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 74px) 18px calc(env(safe-area-inset-bottom) + 28px);
-  background:#fffaf2;color:var(--ink);}
+  background:radial-gradient(120% 70% at 50% 0%,#ff7a1a 0%,#e0260f 45%,#8f0d06 100%);}
+.cta::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg at 50% 18%,rgba(255,230,120,.12) 0 6deg,transparent 6deg 18deg);animation:spin 40s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
 .cta > *{position:relative;}
+/* the jar cut out of rare.webp (jar.webp), so no orange square shows around it */
 .cta .jar{display:block;width:78%;margin:0 auto;height:auto;animation:bob 3s ease-in-out infinite;}
 @keyframes bob{50%{transform:translateY(-8px) rotate(-1.5deg)}}
-.cta h2{font-family:Prompt;font-weight:800;font-size:31px;line-height:1.15;text-align:center;margin-top:16px;color:var(--red);}
-.cta .sub{text-align:center;font-size:15px;margin-top:6px;color:#5c4a40;}
+.cta h2{font-family:Prompt;font-weight:800;font-size:31px;line-height:1.15;text-align:center;margin-top:16px;color:var(--yellow);
+  text-shadow:0 3px 0 #7a0c05,0 6px 18px rgba(0,0,0,.35);}
+.cta .sub{text-align:center;font-size:15px;margin-top:6px;opacity:.95;}
 .chip{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
-.chip span{font-size:13px;font-weight:600;background:#fff;border:1px solid #eadfce;border-radius:999px;padding:5px 12px;}
-.marquee{margin:18px -18px 0;overflow:hidden;white-space:nowrap;padding:10px 0;background:#f3ebde;
+.chip span{font-size:13px;font-weight:600;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 12px;}
+.marquee{margin:18px -18px 0;overflow:hidden;white-space:nowrap;padding:10px 0;background:rgba(0,0,0,.18);
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
 .marquee div{display:inline-block;animation:scroll 48s linear infinite;}
-.marquee span{display:inline-block;margin-right:12px;background:#fff;color:var(--ink);border:1px solid #eadfce;border-radius:14px;padding:8px 13px;font-size:14px;font-weight:600;}
+.marquee span{display:inline-block;margin-right:12px;background:#fff;color:var(--ink);border-radius:14px;padding:8px 13px;font-size:14px;font-weight:600;}
 .marquee span em{font-style:normal;color:#f5a400;margin-left:6px;letter-spacing:-1px;}
 @keyframes scroll{to{transform:translateX(-50%)}}
 .search{display:flex;align-items:center;gap:10px;margin-top:18px;background:#fff;color:var(--ink);border-radius:999px;padding:12px 16px;
-  font-family:Prompt;font-weight:600;font-size:14.5px;text-decoration:none;border:1.5px solid #eadfce;}
+  font-family:Prompt;font-weight:600;font-size:14.5px;text-decoration:none;box-shadow:0 8px 20px rgba(0,0,0,.25);}
 .search i{font-style:normal;font-size:18px;}
 .search b{margin-left:auto;font-size:12px;background:var(--ink);color:#fff;border-radius:999px;padding:4px 10px;white-space:nowrap;}
 .links{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
-.links a{display:flex;align-items:center;gap:9px;padding:12px;border-radius:16px;text-decoration:none;color:var(--ink);font-weight:600;font-size:14px;
-  background:#fff;border:1px solid #eadfce;}
+.links a{display:flex;align-items:center;gap:9px;padding:12px;border-radius:16px;text-decoration:none;color:#fff;font-weight:600;font-size:14px;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .links a svg{width:22px;height:22px;flex-shrink:0;}
 .links a small{display:block;font-weight:400;font-size:11.5px;opacity:.85;}
 .share2{display:block;width:100%;margin-top:16px;height:52px;border:none;border-radius:16px;background:var(--yellow);color:var(--ink);
-  font-family:Prompt;font-weight:700;font-size:17px;cursor:pointer;}
-.again{display:block;margin:18px auto 0;border:none;background:none;color:#5c4a40;font:inherit;font-size:14px;text-decoration:underline;opacity:.9;cursor:pointer;}
+  font-family:Prompt;font-weight:700;font-size:17px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.25);}
+.again{display:block;margin:18px auto 0;border:none;background:none;color:#fff;font:inherit;font-size:14px;text-decoration:underline;opacity:.9;cursor:pointer;}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
 </style>
 </head>
@@ -146,16 +148,16 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
       <a class="search" id="tiktokSearch" target="_blank" rel="noopener"><i>🔍</i>พริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา<b>ค้นใน TikTok</b></a>
       <div class="links">
         <a href="https://www.instagram.com/emocha.official/" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#fff"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#fff"/></svg>
           <span>Instagram<small>emocha.official</small></span></a>
         <a href="https://line.me/R/ti/p/@Spunkyfood" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.5 7.3 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.5 1.1-.5 5.9-3.5 8.1-6 1.5-1.6 2.2-3.2 2.2-4.9C22 6.6 17.5 3 12 3z"/></svg>
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.5 7.3 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.5 1.1-.5 5.9-3.5 8.1-6 1.5-1.6 2.2-3.2 2.2-4.9C22 6.6 17.5 3 12 3z"/></svg>
           <span>LINE<small>@Spunkyfood</small></span></a>
         <a id="tiktokLink" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7a4.5 4.5 0 0 1-4.4-4.7z"/></svg>
           <span>TikTok<small>เอมโอชา</small></span></a>
         <a id="fbLink" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.9-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V9c0-.6.4-1 1-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.9-4.5 4.6V11H7v4h2.5v7h4v-7h3l.5-4h-3.5V9c0-.6.4-1 1-1z"/></svg>
           <span>Facebook<small>เอมโอชา</small></span></a>
       </div>
       <button class="share2" id="share2" type="button">📤 แชร์ให้เพื่อน</button>
@@ -196,7 +198,6 @@ $('#fbLink').href = 'https://www.facebook.com/search/top?q=' + encodeURIComponen
 
 $('#bars').innerHTML = slides.map(function(){ return '<i><b></b></i>'; }).join('');
 var fills = Array.prototype.slice.call(document.querySelectorAll('#bars b'));
-var stage = $('#stage');
 var cur = -1, t0 = 0, held = 0, paused = false, raf = 0;
 
 function show(i){
@@ -207,8 +208,7 @@ function show(i){
   var bg = slides[i].dataset.bg;
   $('#bg').style.backgroundImage = 'url(' + bg + ')';
   $('#zoom').href = bg;
-  $('.side').style.display = i < slides.length - 1 ? '' : 'none';
-  stage.classList.toggle('light', i === slides.length - 1);   // the last slide has its own buttons
+  $('.side').style.display = i < slides.length - 1 ? '' : 'none';   // the last slide has its own buttons
   if (i > 0) $('#hint').style.opacity = 0;
 }
 function tick(now){
@@ -225,6 +225,7 @@ $('#next').addEventListener('click', function(){ show(cur + 1); });
 $('#prev').addEventListener('click', function(){ show(cur - 1); });
 $('#again').addEventListener('click', function(){ show(0); });
 // hold anywhere on the art to pause, like stories
+var stage = $('#stage');
 stage.addEventListener('pointerdown', function(e){ if (e.target.closest('.tapzone')) paused = true; });
 ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ stage.addEventListener(ev, function(){ paused = false; }); });
 // swipe left / right
