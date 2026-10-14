@@ -36,15 +36,10 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
   transform:skewX(-14deg);}
 .slide.on .shine::before{animation:sweep 3.6s cubic-bezier(.4,0,.2,1) .5s infinite;}
 @keyframes sweep{0%{left:-60%}55%,100%{left:130%}}
-/* pulse rings on the hearts / likes / wow faces printed in the art */
-.ping{position:absolute;width:7%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;}
-.ping::before,.ping::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.95);opacity:0;}
-.ping.h::before,.ping.h::after{border-color:#ff5d7a;box-shadow:0 0 14px #ff2d55;}
-.ping.l::before,.ping.l::after{border-color:#b98cff;box-shadow:0 0 14px #8a4dff;}
-.ping.e::before,.ping.e::after{border-color:#ffe500;box-shadow:0 0 14px #ffc400;}
-.slide.on .ping::before{animation:ring 2.2s ease-out infinite;animation-delay:var(--d,0s);}
-.slide.on .ping::after{animation:ring 2.2s ease-out infinite;animation-delay:calc(var(--d,0s) + 1.1s);}
-@keyframes ring{0%{transform:scale(.7);opacity:.95}100%{transform:scale(2.1);opacity:0}}
+/* each comment bubble, cut from the same artwork pixels and placed exactly over itself, zooms in and out in turn */
+.art .pop{position:absolute;inset:auto;height:auto;z-index:1;pointer-events:none;transform-origin:50% 50%;will-change:transform;}
+.slide.on .art .pop{animation:pop var(--cycle) ease-in-out infinite;animation-delay:var(--d);}
+@keyframes pop{0%,17%,100%{transform:scale(1);z-index:1}1%,16%{z-index:5}6%{transform:scale(1.26)}11%{transform:scale(1.2)}}
 .spark{position:absolute;width:3.2%;aspect-ratio:1;transform:translate(-50%,-50%) scale(0);pointer-events:none;
   background:radial-gradient(circle,#fff 0 12%,rgba(255,240,150,.9) 13% 22%,transparent 60%);
   clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%);}
@@ -122,15 +117,13 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
     <div class="art">
       <img src="hit.webp" alt="ฮิตติดกระแส ของดีควรมีติด Shelf — พริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา พร้อมรีวิวจากลูกค้า">
       <div class="shine"></div>
+      <img class="pop" src="zoom/h1.webp" alt="" style="left:4.455%;top:47.75%;width:22.984%;--d:0.0s;--cycle:6.0s">
+      <img class="pop" src="zoom/h2.webp" alt="" style="left:70.297%;top:49.2%;width:20.297%;--d:1.0s;--cycle:6.0s">
+      <img class="pop" src="zoom/h3.webp" alt="" style="left:5.304%;top:61.4%;width:21.924%;--d:2.0s;--cycle:6.0s">
+      <img class="pop" src="zoom/h4.webp" alt="" style="left:71.287%;top:61.55%;width:24.611%;--d:3.0s;--cycle:6.0s">
+      <img class="pop" src="zoom/h5.webp" alt="" style="left:7.992%;top:73.65%;width:24.54%;--d:4.0s;--cycle:6.0s">
+      <img class="pop" src="zoom/h6.webp" alt="" style="left:65.7%;top:74.25%;width:19.024%;--d:5.0s;--cycle:6.0s">
       <!-- positions are pixels in the 1414×2000 artwork, as % -->
-      <i class="ping h" style="left:24.75%;top:57.85%;--d:0s"></i>
-      <i class="ping h" style="left:93.21%;top:71.75%;--d:.5s"></i>
-      <i class="ping h" style="left:29.92%;top:80.5%;--d:1s"></i>
-      <i class="ping h" style="left:82.04%;top:82.1%;--d:1.5s"></i>
-      <i class="ping l" style="left:21.07%;top:49.6%;--d:.25s"></i>
-      <i class="ping l" style="left:85.79%;top:51.85%;--d:.75s"></i>
-      <i class="ping l" style="left:7.92%;top:63.6%;--d:1.25s"></i>
-      <i class="ping l" style="left:88.76%;top:63.4%;--d:1.75s"></i>
       <i class="spark" style="left:30%;top:7%;--d:.2s"></i><i class="spark" style="left:86%;top:12%;--d:1.1s;--t:2s"></i>
       <i class="spark" style="left:7%;top:22%;--d:.7s"></i><i class="spark" style="left:61%;top:3%;--d:1.6s;--t:2.8s"></i>
       <i class="spark" style="left:93%;top:33%;--d:.4s;--t:2.2s"></i><i class="spark" style="left:18%;top:42%;--d:1.9s"></i>
@@ -142,12 +135,13 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:#120806;color:#fff;o
     <div class="art">
       <img src="rare.webp" alt="ของแรร์คนตามหา — รีวิวจากลูกค้าและคลิปยอดวิวสูงของพริกผัดน้ำมันมะกอกอัลมอนด์ เอมโอชา Only at 7-Eleven">
       <div class="shine"></div>
-      <i class="ping e" style="left:26.87%;top:3.3%;--d:0s"></i>
-      <i class="ping e" style="left:6.01%;top:15.75%;--d:.6s"></i>
-      <i class="ping e" style="left:56.58%;top:13.25%;--d:1.2s"></i>
-      <i class="ping h" style="left:67.54%;top:52%;--d:.3s"></i>
-      <i class="ping l" style="left:74.82%;top:52.9%;--d:.9s"></i>
-      <i class="ping h" style="left:80.27%;top:52.35%;--d:1.5s"></i>
+      <img class="pop" src="zoom/r1.webp" alt="" style="left:61.81%;top:6.95%;width:34.229%;--d:0.0s;--cycle:7.0s">
+      <img class="pop" src="zoom/r2.webp" alt="" style="left:13.013%;top:20.1%;width:37.482%;--d:1.0s;--cycle:7.0s">
+      <img class="pop" src="zoom/r3.webp" alt="" style="left:56.931%;top:18.05%;width:37.482%;--d:2.0s;--cycle:7.0s">
+      <img class="pop" src="zoom/r4.webp" alt="" style="left:3.96%;top:30.45%;width:37.412%;--d:3.0s;--cycle:7.0s">
+      <img class="pop" src="zoom/r5.webp" alt="" style="left:49.081%;top:29.0%;width:37.412%;--d:4.0s;--cycle:7.0s">
+      <img class="pop" src="zoom/r6.webp" alt="" style="left:23.197%;top:40.2%;width:32.744%;--d:5.0s;--cycle:7.0s">
+      <img class="pop" src="zoom/r7.webp" alt="" style="left:60.255%;top:39.85%;width:32.815%;--d:6.0s;--cycle:7.0s">
       <i class="spark" style="left:12%;top:4%;--d:.3s"></i><i class="spark" style="left:66%;top:6%;--d:1.2s;--t:2s"></i>
       <i class="spark" style="left:95%;top:46%;--d:.8s"></i><i class="spark" style="left:40%;top:76%;--d:1.7s;--t:2.8s"></i>
       <i class="spark" style="left:93%;top:84%;--d:.5s;--t:2.2s"></i>
