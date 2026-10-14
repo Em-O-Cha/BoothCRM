@@ -304,7 +304,7 @@ textarea.fc.sv-open{min-height:64px;}
       <input class="fc" id="cfgEvent" placeholder="เช่น งานแฟรนไชส์ ไบเทค ต.ค. 69"></div>
     <div class="fg"><label for="cfgStaff">ชื่อผู้บันทึก</label>
       <input class="fc" id="cfgStaff" placeholder="ชื่อพนักงานที่ใช้เครื่องนี้"></div>
-    <div class="fg"><label for="cfgAutoStop">หยุดฟังเองเมื่อเงียบ</label>
+    <div class="fg"><label for="cfgAutoStop">หยุดฟังและบันทึกอัตโนมัติเมื่อเงียบ</label>
       <select class="fc" id="cfgAutoStop">
         <option value="10">10 วินาที</option>
         <option value="15">15 วินาที</option>
@@ -312,7 +312,7 @@ textarea.fc.sv-open{min-height:64px;}
         <option value="30">30 วินาที</option>
         <option value="0">ไม่หยุดเอง (แตะ “จบการสนทนา” เท่านั้น)</option>
       </select>
-      <span class="hint">ถ้าบูธมีคนพูดรอบข้างตลอด ระบบอาจไม่เงียบพอให้หยุดเอง แตะ “จบการสนทนา” ได้ทุกเมื่อ</span></div>
+      <span class="hint">เงียบครบเวลาแล้ว ระบบหยุดฟัง ให้ AI อ่าน แล้วบันทึกลูกค้าให้เอง (แก้ไขภายหลังได้ที่ 📋 รายชื่อ) · ถ้าบูธมีคนพูดรอบข้างตลอด ระบบอาจไม่เงียบพอให้หยุดเอง แตะ “จบการสนทนา” ได้ทุกเมื่อ</span></div>
     <div class="fg"><label for="cfgBranches">รายชื่อสาขา (บรรทัดละ 1 สาขา)</label>
       <textarea class="fc" id="cfgBranches" style="min-height:140px" placeholder="สาขาลาดพร้าว&#10;สาขาบางนา&#10;สาขาเชียงใหม่"></textarea>
       <span class="hint">ใส่ไว้แล้วระบบจะจับคู่เสียงที่ได้ยินกับชื่อสาขาที่ถูกต้อง ลดการสะกดผิด</span></div>
@@ -347,7 +347,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '15 (14 ต.ค. 69)';
+var APP_VERSION = '16 (14 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -756,7 +756,7 @@ function convoState(){ return active && active.field === 'convo' ? active : null
 
 var QUIET_SHOW_MS = 3000;
 function renderConvoBtn(){
-  var b = $('#btnConvo'), st = convoState(), stopHint = cfg.autoStop ? 'หยุดเองเมื่อเงียบ ' + cfg.autoStop + ' วิ หรือแตะเพื่อจบ' : 'แตะอีกครั้งเมื่อคุยจบ';
+  var b = $('#btnConvo'), st = convoState(), stopHint = cfg.autoStop ? 'เงียบ ' + cfg.autoStop + ' วิ = จบและบันทึกให้เอง หรือแตะเพื่อจบ' : 'แตะอีกครั้งเมื่อคุยจบ';
   b.classList.toggle('on', !!st);
   if (st){
     var quiet = Date.now() - st.lastSpeech, sub = 'กำลังฟัง… คุยกับลูกค้าตามปกติได้เลย';
@@ -880,6 +880,7 @@ function startRec(field){
   if (active){ pendingStart = field; stopRec(); return null; }
   if (noiseBusy) return null;
   if (clipRec){ toast('กำลังอัดคลิปอยู่ — กดหยุดอัดก่อน'); return null; }
+  autoSaveTicket = null;   // still talking: don't auto-save the earlier part on its own
   var st = { field:field, segs:[], sessionFinals:[], interim:'', stopping:false, done:false, error:null, t0:Date.now() };
   st.lastSpeech = st.t0; st.lastHeard = '';
   try { openSession(st); } catch(err){ toast('เริ่มฟังไม่ได้ ลองอีกครั้ง'); return null; }
@@ -927,7 +928,7 @@ function finish(st){
     if (navigator.vibrate) try{ navigator.vibrate([200, 100, 200]); }catch(e){}
   }
   if (st.autoStopped){
-    toast('จบการสนทนาแล้ว (เงียบ ' + cfg.autoStop + ' วิ) — ตรวจข้อมูลแล้วกดบันทึก');
+    toast('จบการสนทนาแล้ว (เงียบ ' + cfg.autoStop + ' วิ) — AI กำลังอ่าน แล้วจะบันทึกให้อัตโนมัติ', 4000);
     if (navigator.vibrate) try{ navigator.vibrate([60, 80, 60]); }catch(e){}
   }
   refreshGot(); renderConvoBtn();
@@ -977,7 +978,7 @@ var APPLY = {
       (r.filled.length ? 'เติมให้: <b>' + r.filled.join(', ') + '</b> — ตรวจช่องสีเหลือง' : 'ไม่พบข้อมูลใหม่ในบทสนทนา');
     if (r.otherPhones.length) msg += ' · <b style="color:var(--warn)">พบเบอร์อื่นด้วย: ' + esc(r.otherPhones.map(fmtPhone).join(', ')) + '</b>';
     setHeard('details', msg + (low ? LOW_NOTE : ''));
-    aiRead();
+    aiRead(st.autoStopped ? armAutoSave() : null);
   }
 };
 function applySurveyMic(text, texts, low, st){
@@ -1025,12 +1026,25 @@ function setAiStatus(html, kind){
   var el = $('#aiStatus'); if (!el) return;
   el.hidden = !html; el.innerHTML = html || ''; el.className = 'ai-st' + (kind ? ' ' + kind : '');
 }
+// Auto-save after a silent auto-stop. Starting the mic again (same customer still talking) or clearing /
+// changing the form cancels it, so nothing is saved twice or onto the next customer.
+var autoSaveTicket = null;
+function armAutoSave(){
+  var ticket = autoSaveTicket = { gen: formGen };
+  return function(){
+    if (autoSaveTicket !== ticket || ticket.gen !== formGen || active) return;
+    autoSaveTicket = null;
+    if (!formDirty()) return;
+    saveLead();
+    toast('💾 บันทึกอัตโนมัติแล้ว (เงียบ ' + cfg.autoStop + ' วิ) — แก้ไขได้ที่ 📋 รายชื่อ', 4000);
+  };
+}
 function transcriptText(){
   return F.details.value.split('\n').filter(function(l){ return l.indexOf(SUMMARY_PREFIX) !== 0; }).join('\n').trim();
 }
-function aiRead(){
+function aiRead(done){
   var text = transcriptText();
-  if (!text) return;
+  if (!text){ if (done) done(); return; }
   var gen = formGen, ctrl = window.AbortController ? new AbortController() : null;
   var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, AI_TIMEOUT_MS);
   setAiStatus('🤖 AI กำลังอ่านบทสนทนา… (ประมาณ 10 วินาที)', 'busy');
@@ -1045,12 +1059,14 @@ function aiRead(){
       refreshGot(); saveDraft();
       setAiStatus(filled.length ? '🤖 AI เติมให้: <b>' + esc(filled.join(', ')) + '</b> — ตรวจช่องสีเหลือง แล้วกด ✓ ถูกต้อง'
         : '🤖 AI อ่านแล้ว ไม่พบข้อมูลเพิ่ม (ช่องที่ยืนยันหรือพิมพ์เองจะไม่ถูกแก้)', 'ok');
+      if (done) done();
     })
     .catch(function(e){
       clearTimeout(timer);
       if (gen !== formGen) return;
       var why = e && e.name === 'AbortError' ? 'ตอบช้าเกินไป' : (e && e.message) || 'เน็ตหลุด?';
       setAiStatus('⚠ AI อ่านไม่สำเร็จ (' + esc(why) + ') — ใช้ค่าที่ระบบเดาไว้ก่อน แตะ 🔄 เพื่อลองใหม่', 'warn');
+      if (done) done();
     });
 }
 function aiCanFill(f, el){ return !el.value.trim() || guessed[f]; }
