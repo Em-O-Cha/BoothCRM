@@ -124,7 +124,7 @@ var DONT_KNOW = 'ไม่ทราบข้อมูล';   // in a pick-severa
 var QS = [
   { k:'name', q:'ชื่อ', hint:'ชื่อเล่นก็ได้', text:true, ph:'เช่น คุณสมชาย' },
   { k:'branch', q:'สาขา / ร้าน', hint:'ชื่อสาขาหรือย่านที่ตั้ง', text:true, ph:'เช่น สาขาลาดพร้าว' },
-  { k:'type', q:'สาขาของคุณเป็นแบบใด', opts:['แฟรนไชส์','คอร์ปอเรท'] },
+  // ⚡ (15/10/69) เอาคำถาม "สาขาของคุณเป็นแบบใด" ออกแล้ว (ผู้ใช้ขอ)
   { k:'hasProduct', q:'ที่สาขามีสินค้าของเอมโอชาหรือไม่', opts:['มี','ไม่มี'] },
   { k:'noReason', q:'เหตุผลที่ยังไม่มีสินค้าเอมโอชา', multi:true, showIf:'ไม่มี',
     opts:['ไม่รู้จักสินค้าเอมโอชา','เคยสั่งแล้วขายไม่ดี','ไม่รู้ช่องทางสั่งซื้อ', OTHER, DONT_KNOW] },
@@ -211,7 +211,7 @@ $('#form').addEventListener('submit', function(e){
   if (!QS.some(function(Q){ return a[Q.k]; })){ err.hidden = false; err.textContent = 'กรุณาตอบอย่างน้อย 1 ข้อ'; return; }
   var btn = $('#btnSend'); btn.disabled = true; btn.textContent = 'กำลังส่ง…';
   var survey = {};
-  ['type','hasProduct','noReason','refill','inquiry','promoWish','goodPromo'].forEach(function(k){ survey[k] = a[k]; });
+  ['hasProduct','noReason','refill','inquiry','promoWish','goodPromo'].forEach(function(k){ survey[k] = a[k]; });
   fetch(SEND_URL, { method:'POST', headers:{ 'Content-Type':'application/json' },
     body:JSON.stringify({ event:EVENT, name:a.name, branch:a.branch, survey:survey, website:$('#hp').value }) })
     .then(function(r){ return r.json(); })

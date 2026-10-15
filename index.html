@@ -347,7 +347,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '17 (14 ต.ค. 69)';
+var APP_VERSION = '18 (15 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -491,13 +491,7 @@ function findBranchIn(text){
 /* ---------- survey ---------- */
 var BRAND = '(?:เอ็?ม\\s*-?\\s*โอ\\s*-?\\s*ช่?า|em\\s*-?\\s*o\\s*-?\\s*cha)';
 var SURVEY = [
-  { k:'type', short:'คอร์ปอเรท/แฟรนไชส์', q:'สาขาของคุณเป็นแบบใด', chips:['คอร์ปอเรท','แฟรนไชส์'],
-    topic:/คอร์ปอเรท|คอปอเรท|คอร์ปอเรต|corporate|แฟรนไชส์|แฟนไชส์|แฟรนไชน์|franchise/i,
-    statement:/(เป็น|ซื้อ|ทำ|เปิด).{0,6}(แฟรนไชส์|แฟนไชส์|แฟรนไชน์|คอร์ปอเรท|คอปอเรท|คอร์ปอเรต)|ของบริษัท|บริษัทแม่|corporate|franchise/i,
-    pick:function(a){
-      var f = /แฟรนไชส์|แฟนไชส์|แฟรนไชน์|franchise/i.test(a), c = /คอร์ปอเรท|คอปอเรท|คอร์ปอเรต|corporate|ของบริษัท|บริษัทแม่/i.test(a);
-      return f && !c ? 'แฟรนไชส์' : c && !f ? 'คอร์ปอเรท' : '';
-    } },
+  // ⚡ (15/10/69) เอาคำถาม "สาขาของคุณเป็นแบบใด" (คอร์ปอเรท/แฟรนไชส์) ออกจากทุกแบบสอบถาม (ผู้ใช้ขอ) — คอลัมน์ในชีตยังอยู่ ข้อมูลเก่าไม่หาย
   { k:'hasProduct', short:'มีสินค้าเอมโอชา', q:'ที่สาขามีสินค้าของเอมโอชาหรือไม่', chips:['มี','ไม่มี'],
     topic:new RegExp(BRAND + '|สินค้า(ของ)?เรา', 'i'),
     statement:new RegExp('(ร้าน|สาขา|ผม|ดิฉัน|หนู|เรา).{0,25}(มี|ขาย|วาง|สั่ง).{0,15}' + BRAND + '|' + BRAND + '.{0,10}(ขายอยู่|มีอยู่|วางอยู่)', 'i'),
