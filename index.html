@@ -126,6 +126,8 @@ textarea.fc.sv-open{min-height:64px;}
 .list-tools{display:flex;gap:8px;margin-bottom:12px;}
 .list-tools .fc{height:42px;font-size:15px;}
 .list-tools .mini{height:42px;white-space:nowrap;}
+.list-info{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--g6);margin:-4px 2px 10px;}
+.list-info button{font:inherit;font-size:12.5px;border:1px solid #f0d9c4;background:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;color:inherit;}
 .lead{padding:14px 16px;border-bottom:1px solid #f1f1f1;}
 .lead:last-child{border-bottom:none;}
 .lead-hd{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
@@ -292,8 +294,9 @@ textarea.fc.sv-open{min-height:64px;}
       <button class="mini" id="btnShare" hidden>📤 แชร์</button>
       <button class="mini" id="btnSyncAll" hidden>☁️ ส่งขึ้นชีต</button>
     </div>
+    <div class="list-info"><span id="listInfo">รายชื่อรวมทุกเครื่อง</span><button id="btnListReload" type="button">↻ โหลดใหม่</button></div>
     <div class="card" id="leadList"></div>
-    <p class="hint" style="text-align:center"><span id="syncInfo">☁️ บันทึกแล้วส่งเข้า Google Sheet ของบูธให้อัตโนมัติ (หน้าสรุปนับด้วย)</span><br>สำเนายังเก็บในเครื่องนี้ — กด ⬇️ Excel ส่งออกได้ตลอด</p>
+    <p class="hint" style="text-align:center"><span id="syncInfo">☁️ บันทึกแล้วส่งเข้า Google Sheet ของบูธให้อัตโนมัติ (หน้าสรุปนับด้วย)</span><br>รายชื่อนี้รวมทุกเครื่อง ทุกพนักงาน และลูกค้าที่สแกน QR — กด ✏️ แก้ไข เติมคำตอบได้ทุกคน</p>
   </section>
 </div>
 
@@ -348,7 +351,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '20 (16 ต.ค. 69)';
+var APP_VERSION = '21 (16 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -565,7 +568,7 @@ function surveyAnswer(Q, lines){
 var F = { name:$('#f-name'), phone:$('#f-phone'), branch:$('#f-branch'), details:$('#f-details') };
 var heard = { name:'', phone:'', branch:'', details:'' };
 var guessed = {};
-var editingId = null;
+var editingId = null, editingRemote = null;   // editingRemote: sheet id of a customer saved on another phone / QR / LINE
 
 $('#svFields').innerHTML = SURVEY.map(function(Q, i){
   var f = 'sv_' + Q.k;
@@ -631,7 +634,7 @@ function updatePhoneStatus(){
 
 function saveDraft(){
   store(LS_DRAFT, { name:F.name.value, phone:F.phone.value, branch:F.branch.value, details:F.details.value,
-    survey:getSurvey(), heard:heard, guessed:Object.keys(guessed), editingId:editingId });
+    survey:getSurvey(), heard:heard, guessed:Object.keys(guessed), editingId:editingId, editingRemote:editingRemote });
 }
 function fillForm(o){
   formGen++; setAiStatus('');
@@ -642,9 +645,9 @@ function fillForm(o){
   SURVEY.forEach(function(Q){ svEl(Q.k).value = sv[Q.k] || ''; syncChips(Q.k); setHeard('sv_' + Q.k, ''); });
   guessed = {};
   ['name','phone','branch'].concat(SURVEY.map(function(Q){ return 'sv_' + Q.k; })).forEach(function(f){ setGuess(f, (o.guessed || []).indexOf(f) >= 0); });
-  editingId = o.editingId || null;
-  $('#editNote').hidden = !editingId;
-  $('#btnSave').textContent = editingId ? '💾 บันทึกการแก้ไข' : '💾 บันทึกลูกค้า';
+  editingId = o.editingId || null; editingRemote = o.editingRemote || null;
+  $('#editNote').hidden = !(editingId || editingRemote);
+  $('#btnSave').textContent = (editingId || editingRemote) ? '💾 บันทึกการแก้ไข' : '💾 บันทึกลูกค้า';
   updatePhoneStatus();
   refreshGot(); renderConvoBtn();
 }
@@ -1270,6 +1273,7 @@ $('#btnSave').addEventListener('click', function(){
 function saveLead(){
   var name = F.name.value.trim(), d = normPhone(digitsOf(F.phone.value)), branch = F.branch.value.trim(), details = F.details.value.trim();
   if (!formDirty()){ toast('ยังไม่มีข้อมูลให้บันทึก'); return; }
+  if (editingRemote){ saveRemoteEdit(name, d, branch, details); return; }
   var GUESS_LABEL = { name:'ชื่อ', phone:'เบอร์', branch:'สาขา' };
   SURVEY.forEach(function(Q){ GUESS_LABEL['sv_' + Q.k] = Q.short; });
   var g = Object.keys(guessed).map(function(f){ return GUESS_LABEL[f]; });
@@ -1312,14 +1316,16 @@ function surveyHtml(sv){
   return rows.length ? '<div class="sv">' + rows.map(function(Q){ return '<span>' + esc(Q.short) + ':</span> ' + esc(sv[Q.k]); }).join('<br>') + '</div>' : '';
 }
 function renderList(){
-  $('#cnt').textContent = leads.length;
+  var all = allLeads();
+  $('#cnt').textContent = all.length;
+  updateListInfo(all.length);
   var q = $('#q').value.trim().toLowerCase(), qd = digitsOf(q);
-  var rows = leads.filter(function(l){
+  var rows = all.filter(function(l){
     if (!q) return true;
     var sv = l.survey || {};
     return [l.name, l.branch, l.details, l.event].concat(SURVEY.map(function(Q){ return sv[Q.k] || ''; })).join(' ').toLowerCase().indexOf(q) >= 0 || (qd && digitsOf(l.phone).indexOf(qd) >= 0);
   });
-  if (!rows.length){ $('#leadList').innerHTML = '<div class="empty">' + (leads.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีลูกค้าที่บันทึก') + '</div>'; return; }
+  if (!rows.length){ $('#leadList').innerHTML = '<div class="empty">' + (all.length ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีลูกค้าที่บันทึก') + '</div>'; return; }
   $('#leadList').innerHTML = rows.map(function(l){
     var h = l.heard || {}, raw = ['name','phone','branch','details'].filter(function(f){ return h[f]; });
     return '<div class="lead">' +
@@ -1331,14 +1337,23 @@ function renderList(){
       (l.flags || []).map(function(f){ return '<span class="flag">⚠ ' + esc(f) + '</span>'; }).join('') +
       (raw.length ? '<details><summary>ข้อความที่ระบบได้ยิน</summary>' + raw.map(function(f){
         return '<div>' + HEARD_LABEL[f] + ': “' + esc(h[f]) + '”</div>'; }).join('') + '</details>' : '') +
-      '<div class="lead-act"><button class="mini" data-edit="' + l.id + '">✏️ แก้ไข</button><button class="mini" data-del="' + l.id + '">🗑️ ลบ</button></div>' +
+      '<div class="lead-act"><button class="mini" data-edit="' + esc(l.key) + '">✏️ แก้ไข</button>' +
+        (l.mine ? '<button class="mini" data-del="' + esc(l.key) + '">🗑️ ลบ</button>' : '') + '</div>' +
     '</div>';
   }).join('');
 }
 $('#q').addEventListener('input', renderList);
 $('#leadList').addEventListener('click', function(e){
   var b = e.target.closest('button'); if (!b) return;
-  var id = b.dataset.edit || b.dataset.del, l = leads.filter(function(x){ return x.id === id; })[0];
+  var key = b.dataset.edit || b.dataset.del, v = allLeads().filter(function(x){ return x.key === key; })[0];
+  if (!v) return;
+  if (!v.mine){   // saved on another phone, by QR or via LINE: edit it straight in the sheet
+    if (b.dataset.del) return;
+    if (formDirty() && !confirm('ฟอร์มมีข้อมูลค้างอยู่ จะแทนที่ด้วยรายการนี้?')) return;
+    fillForm({ name:v.name, phone:v.phone, branch:v.branch, details:v.details, survey:v.survey, editingRemote:v.sheetId });
+    saveDraft(); showTab('capture'); window.scrollTo(0, 0); return;
+  }
+  var id = v.id, l = leads.filter(function(x){ return x.id === id; })[0];
   if (!l) return;
   if (b.dataset.del){
     if (!confirm('ลบ ' + (l.name || l.phone || 'รายการนี้') + '?')) return;
@@ -1366,6 +1381,7 @@ function queueSync(op, id){
 }
 function syncBody(job){
   if (job.op === 'delete') return { op:'delete', id:job.id };
+  if (job.op === 'update') return { op:'update', id:job.id, lead:job.lead };
   var l = leads.filter(function(x){ return x.id === job.id; })[0];
   if (!l) return null;   // deleted before it was sent
   return { op:'upsert', lead:{ id:l.id, created:l.createdAt, staff:l.staff, event:l.event, name:l.name, phone:l.phone,
@@ -1389,6 +1405,7 @@ function flushSync(){
         var l = leads.filter(function(x){ return x.id === job.id; })[0];
         if (l){ l.syncedAt = Date.now(); persistLeads(); }
       }
+      if (job.op === 'update') setTimeout(loadSheetList, 800);   // refresh the shared list once the edit is in the sheet
       syncBusy = false; updateSyncInfo(); flushSync();
     })
     .catch(function(e){
@@ -1423,17 +1440,68 @@ if (!load(LS_SYNC_INIT, false)){
   });
   store(LS_SYNC, syncQ); store(LS_SYNC_INIT, true);
 }
+/* ---------- one list for every phone ---------- */
+// ⚡ (16/10/69) ผู้ใช้ขอ: เห็นทุกคนทุกเครื่องรวมกัน ไม่แยกเครื่อง ไม่แยกพนักงาน (ไม่ต้องมีรหัสผ่าน) — โหลดทุกแถวจากชีตผ่าน
+//   booth-save (op list) รวมกับรายการในเครื่องนี้ (ของเครื่องนี้ใช้ฉบับในเครื่องซึ่งใหม่กว่า) · แก้คนของเครื่องอื่น/QR/LINE ได้
+//   (ส่งแก้ในชีตด้วย op update ผ่านคิวเดียวกัน) · ลบได้เฉพาะของเครื่องนี้ · จำรายการล่าสุดไว้ใช้ตอนไม่มีเน็ต
+var LS_SHEET = 'boothCRM.sheetList.v1';
+var sheetList = load(LS_SHEET, null) || { at:0, leads:[] }, sheetBusy = false, sheetErr = false;
+function loadSheetList(){
+  if (sheetBusy || navigator.onLine === false) return;
+  sheetBusy = true; updateListInfo();
+  fetch(SAVE_URL, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ op:'list' }) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j || !j.success || !Array.isArray(j.leads)) throw new Error('list');
+      sheetList = { at:Date.now(), leads:j.leads }; store(LS_SHEET, sheetList); sheetErr = false;
+    })
+    .catch(function(){ sheetErr = true; })
+    .then(function(){ sheetBusy = false; renderList(); });
+}
+function allLeads(){
+  var out = [], skip = {};
+  leads.forEach(function(l){ skip['W' + l.id] = true; out.push(Object.assign({}, l, { key:'l:' + l.id, mine:true })); });
+  var pending = {};   // edits not yet in the sheet win over a list loaded before they landed
+  syncQ.forEach(function(x){ if (x.op === 'delete') skip['W' + x.id] = true; if (x.op === 'update') pending[x.id] = x.lead; });
+  (sheetList.leads || []).forEach(function(s){
+    if (!s || !s.id || skip[s.id]) return;
+    var e = pending[s.id] || {};
+    out.push({ key:'s:' + s.id, sheetId:s.id, mine:false, name:'name' in e ? e.name : s.name, phone:'phone' in e ? e.phone : s.phone,
+      branch:'branch' in e ? e.branch : s.branch, details:'details' in e ? e.details : s.summary,
+      survey:Object.assign({}, s.survey || {}, e.survey || {}), createdAt:Date.parse(s.created) || 0, event:s.event, staff:s.staffName,
+      flags:s.note ? [s.note] : [] });
+  });
+  return out.sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+}
+function updateListInfo(n){
+  var el = $('#listInfo'); if (!el) return;
+  if (n == null) n = allLeads().length;
+  var t = sheetList.at ? new Date(sheetList.at).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' }) + ' น.' : '';
+  el.textContent = sheetBusy ? 'กำลังโหลดรายชื่อทุกเครื่อง…'
+    : 'รวมทุกเครื่อง ' + n + ' คน' + (sheetErr ? ' · โหลดล่าสุดไม่สำเร็จ' + (t ? ' (แสดงของ ' + t + ')' : '') : (t ? ' · อัปเดต ' + t : ''));
+}
+function saveRemoteEdit(name, d, branch, details){
+  var lead = { name:name, phone:d ? (isValidPhone(d) ? fmtPhone(d) : d) : '', branch:branch, details:details, survey:getSurvey() };
+  var id = editingRemote, s = (sheetList.leads || []).filter(function(x){ return x.id === id; })[0];
+  if (s){ s.name = lead.name; s.phone = lead.phone; s.branch = lead.branch; s.summary = lead.details; s.survey = Object.assign({}, s.survey, lead.survey); store(LS_SHEET, sheetList); }
+  syncQ = syncQ.filter(function(x){ return x.id !== id; });
+  syncQ.push({ op:'update', id:id, lead:lead, seq:Date.now() + Math.random() });
+  store(LS_SYNC, syncQ); updateSyncInfo(); flushSync();
+  toast('✓ แก้ไขแล้ว'); clearForm(); renderList(); showTab('list');
+}
+$('#btnListReload').addEventListener('click', loadSheetList);
 window.addEventListener('online', flushSync);
 window.addEventListener('offline', updateSyncInfo);
 setInterval(flushSync, 60000);
-updateSyncInfo(); flushSync();
+updateSyncInfo(); flushSync(); loadSheetList();
 
 function csvCell(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
 function exportTable(){
-  var Qs = SURVEY.concat(SURVEY_OLD.filter(function(Q){ return leads.some(function(l){ return l.survey && l.survey[Q.k]; }); }));
+  var list = allLeads();
+  var Qs = SURVEY.concat(SURVEY_OLD.filter(function(Q){ return list.some(function(l){ return l.survey && l.survey[Q.k]; }); }));
   var head = ['วันที่เวลา','งาน/บูธ','ผู้บันทึก','ชื่อ','เบอร์โทร','เจ้าของสาขา']
     .concat(Qs.map(function(Q){ return Q.q; }), ['รายละเอียดที่พูดคุย','หมายเหตุ','ข้อความที่ระบบได้ยิน']);
-  var rows = leads.slice().reverse().map(function(l){
+  var rows = list.slice().reverse().map(function(l){
     var h = l.heard || {};
     var raw = ['name','phone','branch','details'].filter(function(f){ return h[f]; }).map(function(f){ return HEARD_LABEL[f] + ': ' + h[f]; }).join(' | ');
     var sv = l.survey || {};
@@ -1477,7 +1545,7 @@ function download(blob, name){
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
 }
 $('#btnExport').addEventListener('click', function(){
-  if (!leads.length){ toast('ยังไม่มีข้อมูล'); return; }
+  if (!allLeads().length){ toast('ยังไม่มีข้อมูล'); return; }
   loadXlsx().then(function(X){
     download(buildXlsx(X), exportName('xlsx'));
     toast('✓ ได้ไฟล์ Excel แล้ว — เปิดด้วย Google Sheets หรือ Excel ได้');
@@ -1488,7 +1556,7 @@ $('#btnExport').addEventListener('click', function(){
 });
 // Share the file straight to LINE / Google Drive / email from the phone's share menu.
 $('#btnShare').addEventListener('click', function(){
-  if (!leads.length){ toast('ยังไม่มีข้อมูล'); return; }
+  if (!allLeads().length){ toast('ยังไม่มีข้อมูล'); return; }
   loadXlsx().then(function(X){
     var file = new File([buildXlsx(X)], exportName('xlsx'), { type:XLSX_TYPE });
     return navigator.share({ files:[file], title:'รายชื่อลูกค้าหน้าบูธ' });
@@ -1506,7 +1574,7 @@ function showTab(t){
   document.querySelectorAll('.tabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === t); });
   $('#tab-capture').hidden = t !== 'capture';
   $('#tab-list').hidden = t !== 'list';
-  if (t === 'list'){ if (active) stopRec(); renderList(); loadXlsx().catch(function(){}); }
+  if (t === 'list'){ if (active) stopRec(); renderList(); loadSheetList(); loadXlsx().catch(function(){}); }
 }
 document.querySelectorAll('.tabs button').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.dataset.tab); }); });
 
