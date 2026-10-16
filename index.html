@@ -290,9 +290,10 @@ textarea.fc.sv-open{min-height:64px;}
       <input class="fc" id="q" placeholder="ค้นหา ชื่อ / เบอร์ / สาขา / รายละเอียด">
       <button class="mini" id="btnExport">⬇️ Excel</button>
       <button class="mini" id="btnShare" hidden>📤 แชร์</button>
+      <button class="mini" id="btnSyncAll" hidden>☁️ ส่งขึ้นชีต</button>
     </div>
     <div class="card" id="leadList"></div>
-    <p class="hint" style="text-align:center">ข้อมูลเก็บอยู่ในเครื่องนี้เท่านั้น — กด ⬇️ Excel ส่งออกเป็นระยะ (เปิดด้วย Google Sheets / Excel ได้) หรือ 📤 แชร์ไฟล์เข้า LINE / Google Drive</p>
+    <p class="hint" style="text-align:center"><span id="syncInfo">☁️ บันทึกแล้วส่งเข้า Google Sheet ของบูธให้อัตโนมัติ (หน้าสรุปนับด้วย)</span><br>สำเนายังเก็บในเครื่องนี้ — กด ⬇️ Excel ส่งออกได้ตลอด</p>
   </section>
 </div>
 
@@ -347,7 +348,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '18 (15 ต.ค. 69)';
+var APP_VERSION = '19 (16 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -1279,13 +1280,16 @@ function saveLead(){
   if (dup) flags.push('เบอร์ซ้ำกับ ' + (dup.name || 'รายการเดิม'));
   var rec = { name:name, phone:d ? (isValidPhone(d) ? fmtPhone(d) : d) : '', branch:branch, details:details, survey:getSurvey(),
     heard:heard, flags:flags, updatedAt:now };
+  var savedId = editingId;
   if (editingId){
     var i = leads.findIndex(function(l){ return l.id === editingId; });
     if (i >= 0){ rec.survey = Object.assign({}, leads[i].survey, rec.survey); leads[i] = Object.assign({}, leads[i], rec); }
   } else {
-    leads.unshift(Object.assign({ id:uid(), createdAt:now, event:cfg.event, staff:cfg.staff }, rec));
+    savedId = uid();
+    leads.unshift(Object.assign({ id:savedId, createdAt:now, event:cfg.event, staff:cfg.staff }, rec));
   }
   if (!persistLeads()) return;
+  queueSync('upsert', savedId);
   toast(editingId ? '✓ แก้ไขแล้ว' : '✓ บันทึก' + (name ? ' ' + name : '') + 'แล้ว');
   var wasEditing = !!editingId;
   clearForm(); renderList();
@@ -1338,12 +1342,93 @@ $('#leadList').addEventListener('click', function(e){
   if (!l) return;
   if (b.dataset.del){
     if (!confirm('ลบ ' + (l.name || l.phone || 'รายการนี้') + '?')) return;
-    leads = leads.filter(function(x){ return x.id !== id; }); persistLeads(); renderList(); return;
+    leads = leads.filter(function(x){ return x.id !== id; }); persistLeads(); queueSync('delete', id); renderList(); return;
   }
   if (formDirty() && !confirm('ฟอร์มมีข้อมูลค้างอยู่ จะแทนที่ด้วยรายการนี้?')) return;
   fillForm({ name:l.name, phone:l.phone, branch:l.branch, details:l.details, survey:l.survey, heard:l.heard, editingId:l.id });
   saveDraft(); showTab('capture'); window.scrollTo(0, 0);
 });
+
+/* ---------- send to the booth Google Sheet ---------- */
+// ⚡ (16/10/69) ผู้ใช้ขอ: รายชื่อที่บันทึกในหน้านี้ต้องเข้าชีตด้วย หน้าสรุป (dashboard) จึงนับครบทุกช่องทาง
+// ทุกการบันทึก/แก้/ลบ เข้าคิวในเครื่อง (localStorage) แล้วส่งทีละรายการผ่าน booth-save · เน็ตหลุดก็ไม่หาย
+// ส่งต่อเมื่อเน็ตกลับ / ทุก 1 นาที / เปิดหน้าใหม่ · ชีตใช้รหัสของเครื่อง ส่งซ้ำได้ไม่เกิดแถวซ้ำ
+// "ล้างรายชื่อทั้งหมดในเครื่อง" ไม่ลบในชีต (ลบในชีตเฉพาะตอนกด 🗑️ ลบ ทีละรายการ)
+var SAVE_URL = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/booth-save?forceFunctionRegion=ap-northeast-2';
+var LS_SYNC = 'boothCRM.syncq.v1', LS_SYNC_INIT = 'boothCRM.syncInit.v1';
+// the sheet was emptied on purpose on 15 Oct 69 21:00 — the one-time catch-up only sends leads saved after that
+var SYNC_BACKFILL_SINCE = Date.UTC(2026, 9, 15, 14, 0, 0);
+var syncQ = load(LS_SYNC, []), syncBusy = false, syncRetryT = null, syncErr = '';
+function queueSync(op, id){
+  syncQ = syncQ.filter(function(x){ return x.id !== id; });   // the newest change of a lead replaces an older unsent one
+  syncQ.push({ op:op, id:id, seq:Date.now() + Math.random() });
+  store(LS_SYNC, syncQ); updateSyncInfo(); flushSync();
+}
+function syncBody(job){
+  if (job.op === 'delete') return { op:'delete', id:job.id };
+  var l = leads.filter(function(x){ return x.id === job.id; })[0];
+  if (!l) return null;   // deleted before it was sent
+  return { op:'upsert', lead:{ id:l.id, created:l.createdAt, staff:l.staff, event:l.event, name:l.name, phone:l.phone,
+    branch:l.branch, survey:l.survey || {}, details:l.details, flags:l.flags || [] } };
+}
+function dropJob(job){
+  syncQ = syncQ.filter(function(x){ return x.seq !== job.seq; }); store(LS_SYNC, syncQ);
+}
+function flushSync(){
+  if (syncBusy || !syncQ.length) return;
+  if (navigator.onLine === false){ updateSyncInfo(); return; }
+  var job = syncQ[0], body = syncBody(job);
+  if (!body){ dropJob(job); updateSyncInfo(); flushSync(); return; }
+  syncBusy = true; clearTimeout(syncRetryT);
+  fetch(SAVE_URL, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(body) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j || !j.success) throw new Error((j && j.error) || 'ส่งไม่สำเร็จ');
+      dropJob(job); syncErr = '';
+      if (job.op === 'upsert'){
+        var l = leads.filter(function(x){ return x.id === job.id; })[0];
+        if (l){ l.syncedAt = Date.now(); persistLeads(); }
+      }
+      syncBusy = false; updateSyncInfo(); flushSync();
+    })
+    .catch(function(e){
+      syncBusy = false; syncErr = (e && e.message) || 'ส่งไม่สำเร็จ'; updateSyncInfo();
+      syncRetryT = setTimeout(flushSync, 30000);
+    });
+}
+function unsentLeads(){
+  var queued = {}; syncQ.forEach(function(x){ queued[x.id] = true; });
+  return leads.filter(function(l){ return !l.syncedAt && !queued[l.id]; });
+}
+function updateSyncInfo(){
+  var info = $('#syncInfo'), btn = $('#btnSyncAll'), waiting = syncQ.length, unsent = unsentLeads().length;
+  if (info) info.textContent = waiting
+    ? (navigator.onLine === false ? '📴 ไม่มีเน็ต — รอส่งเข้าชีต ' + waiting + ' รายการ (ส่งให้เองเมื่อเน็ตกลับมา)'
+      : '☁️ กำลังส่งเข้า Google Sheet… เหลือ ' + waiting + ' รายการ' + (syncErr ? ' (ลองใหม่อัตโนมัติ)' : ''))
+    : '☁️ บันทึกแล้วส่งเข้า Google Sheet ของบูธให้อัตโนมัติ (หน้าสรุปนับด้วย)';
+  if (btn){ btn.hidden = !unsent; btn.textContent = '☁️ ส่งขึ้นชีต (' + unsent + ')'; }
+}
+$('#btnSyncAll').addEventListener('click', function(){
+  var list = unsentLeads();
+  if (!list.length) return;
+  var older = list.filter(function(l){ return l.createdAt < SYNC_BACKFILL_SINCE; }).length;
+  if (!confirm('ส่งรายชื่อในเครื่องนี้ที่ยังไม่ได้ขึ้นชีต ' + list.length + ' รายการ เข้า Google Sheet?'
+    + (older ? '\n(ในนั้น ' + older + ' รายการบันทึกก่อนล้างชีตเมื่อ 15 ต.ค. 21:00)' : ''))) return;
+  list.slice().reverse().forEach(function(l){ syncQ.push({ op:'upsert', id:l.id, seq:Date.now() + Math.random() }); });
+  store(LS_SYNC, syncQ); updateSyncInfo(); flushSync();
+});
+// one-time catch-up for leads saved on this device before sync existed (only those after the sheet was emptied)
+if (!load(LS_SYNC_INIT, false)){
+  var queued0 = {}; syncQ.forEach(function(x){ queued0[x.id] = true; });
+  leads.slice().reverse().forEach(function(l){
+    if (l.createdAt >= SYNC_BACKFILL_SINCE && !l.syncedAt && !queued0[l.id]) syncQ.push({ op:'upsert', id:l.id, seq:Date.now() + Math.random() });
+  });
+  store(LS_SYNC, syncQ); store(LS_SYNC_INIT, true);
+}
+window.addEventListener('online', flushSync);
+window.addEventListener('offline', updateSyncInfo);
+setInterval(flushSync, 60000);
+updateSyncInfo(); flushSync();
 
 function csvCell(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
 function exportTable(){
