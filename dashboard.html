@@ -32,6 +32,7 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--page);color:va
 .seg button.on{background:var(--btn);color:#fff;font-weight:600;box-shadow:0 3px 10px rgba(255,106,61,.3);}
 select{font:inherit;font-size:13.5px;color:var(--text-1);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;max-width:220px;}
 .refresh{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-3);}
+.refresh a{font-size:13px;font-weight:600;color:#e8590c;background:#fff;text-decoration:none;border:1.5px solid #f59f00;border-radius:10px;padding:6px 10px;white-space:nowrap;}
 .refresh button{font:inherit;font-size:13px;border:none;background:var(--btn);color:#fff;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer;}
 main{transition:opacity .2s;} main.busy{opacity:.55;}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;}
@@ -91,7 +92,7 @@ details.others li{margin:4px 0 0 18px;}
 <div class="wrap">
   <header class="top">
     <img src="logo.png" alt="เอมโอชา">
-    <div><h1>Dashboard ความคิดเห็นหน้าบูธ</h1><p>รวมคำตอบจากลูกค้าสแกน QR และที่พนักงานบันทึก (หน้าพนักงาน / LINE)</p></div>
+    <div><h1>Dashboard ความคิดเห็นหน้าบูธ</h1><p>รวมทุกคน ทุกเครื่อง ทุกช่องทาง</p></div>
     <a href="./">← หน้าบันทึก</a>
   </header>
 
@@ -100,18 +101,15 @@ details.others li{margin:4px 0 0 18px;}
       <button data-v="all" class="on">ทั้งหมด</button><button data-v="1">วันนี้</button><button data-v="7">7 วัน</button><button data-v="30">30 วัน</button>
     </div>
     <select id="fEvent" aria-label="งาน"><option value="">ทุกงาน</option></select>
-    <div class="seg" id="fSrc">
-      <button data-v="" class="on">ทุกช่องทาง</button><button data-v="qr">ลูกค้าสแกน QR</button><button data-v="line">พนักงานบันทึก</button>
-    </div>
-    <div class="refresh"><span id="upd"></span><button id="btnRefresh" type="button">↻ อัปเดต</button></div>
+    <div class="refresh"><span id="upd"></span><a href="https://docs.google.com/spreadsheets/d/1pvgsvESC24cae8YrfavbA385zErc066DuU_38NF9CGU/edit" target="_blank" rel="noopener">📄 ชีตรายชื่อ</a><button id="btnRefresh" type="button">↻ อัปเดต</button></div>
   </div>
 
   <div class="err" id="err" hidden></div>
   <main id="main">
     <section class="kpis">
       <div class="card kpi hero"><div class="l">💬 ผู้แสดงความคิดเห็นทั้งหมด</div><div class="v" id="kTotal">–</div><div class="s" id="kTotalSub"></div></div>
-      <div class="card kpi k1"><div class="l">📱 ลูกค้าสแกน QR</div><div class="v" id="kQr">–</div><div class="s" id="kQrSub"></div></div>
-      <div class="card kpi k2"><div class="l">💬 พนักงานบันทึก</div><div class="v" id="kLine">–</div><div class="s" id="kLineSub"></div></div>
+      <div class="card kpi k1"><div class="l">✅ ตอบแบบสอบถามแล้ว</div><div class="v" id="kDone">–</div><div class="s" id="kDoneSub"></div></div>
+      <div class="card kpi k2"><div class="l">✍️ ยังไม่มีคำตอบ (รอเติม)</div><div class="v" id="kTodo">–</div><div class="s" id="kTodoSub"></div></div>
       <div class="card kpi k3"><div class="l">🏪 มีสินค้าเอมโอชาแล้ว</div><div class="v" id="kHas">–</div><div class="s" id="kHasSub"></div></div>
     </section>
     <section class="card trend">
@@ -139,7 +137,7 @@ var Q = [
 var LAST = ['ไม่ทราบข้อมูล', 'อื่น ๆ (ระบุเอง)'];   // always listed after the ranked answers
 var MAX_BARS = 8;
 var $ = function(s){ return document.querySelector(s); };
-var data = null, f = { range:'all', event:'', src:'' };
+var data = null, f = { range:'all', event:'' };
 
 function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function pct(n, d){ return d ? Math.round(n / d * 100) : 0; }
@@ -183,7 +181,7 @@ function load(fresh){
 function filtered(){
   var since = f.range === 'all' ? null : (function(){ var d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (+f.range - 1)); return d; })();
   return data.rows.filter(function(r){
-    return (!f.event || r[2] === f.event) && (!f.src || r[1] === f.src) && (!since || new Date(r[0]) >= since);
+    return (!f.event || r[2] === f.event) && (!since || new Date(r[0]) >= since);
   });
 }
 function answers(row, i, multi){
@@ -194,11 +192,12 @@ function answers(row, i, multi){
 /* ---------- render ---------- */
 function render(){
   var rows = filtered(), n = rows.length, idx = function(k){ return data.keys.indexOf(k); };
-  var qr = rows.filter(function(r){ return r[1] === 'qr'; }).length, line = n - qr;
+  // ⚡ (16/10/69) ผู้ใช้ขอ: รวมทุกคนเป็นยอดเดียว ไม่แยก QR / พนักงาน / เครื่อง — แยกแค่ตอบแล้วกับยังไม่มีคำตอบ (ไว้ตามเติมข้อมูล)
+  var done = rows.filter(function(r){ return r.slice(3).some(Boolean); }).length, todo = n - done;
   $('#kTotal').textContent = n.toLocaleString('th-TH');
   $('#kTotalSub').textContent = n ? 'ช่วงที่เลือก' + (f.event ? ' · ' + f.event : '') : 'ยังไม่มีข้อมูลในช่วงนี้';
-  $('#kQr').textContent = qr.toLocaleString('th-TH'); $('#kQrSub').textContent = n ? pct(qr, n) + '% ของทั้งหมด' : '';
-  $('#kLine').textContent = line.toLocaleString('th-TH'); $('#kLineSub').textContent = n ? pct(line, n) + '% ของทั้งหมด' : '';
+  $('#kDone').textContent = done.toLocaleString('th-TH'); $('#kDoneSub').textContent = n ? pct(done, n) + '% ของทั้งหมด' : '';
+  $('#kTodo').textContent = todo.toLocaleString('th-TH'); $('#kTodoSub').textContent = todo ? 'เติมคำตอบได้ใน Google Sheet' : (n ? 'ครบทุกคนแล้ว' : '');
   var hp = rows.map(function(r){ return r[3 + idx('hasProduct')]; }).filter(Boolean), yes = hp.filter(function(v){ return v === 'มี'; }).length;
   $('#kHas').textContent = hp.length ? pct(yes, hp.length) + '%' : '–';
   $('#kHasSub').textContent = hp.length ? yes + ' จาก ' + hp.length + ' สาขาที่ตอบ' : 'ยังไม่มีคำตอบข้อนี้';
@@ -287,7 +286,7 @@ function seg(id, key){
     f[key] = b.dataset.v; if (data) render();
   });
 }
-seg('#fRange', 'range'); seg('#fSrc', 'src');
+seg('#fRange', 'range');
 $('#fEvent').addEventListener('change', function(){ f.event = this.value; if (data) render(); });
 $('#btnRefresh').addEventListener('click', function(){ load(true); });
 load(false);

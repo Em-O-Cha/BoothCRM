@@ -348,7 +348,7 @@ textarea.fc.sv-open{min-height:64px;}
 'use strict';
 
 // Shown under the title so staff can tell whether the phone has loaded the latest page.
-var APP_VERSION = '19 (16 ต.ค. 69)';
+var APP_VERSION = '20 (16 ต.ค. 69)';
 $('#appVer').textContent = 'เวอร์ชัน ' + APP_VERSION;
 
 /* ---------- storage ---------- */
@@ -1355,9 +1355,9 @@ $('#leadList').addEventListener('click', function(e){
 // ส่งต่อเมื่อเน็ตกลับ / ทุก 1 นาที / เปิดหน้าใหม่ · ชีตใช้รหัสของเครื่อง ส่งซ้ำได้ไม่เกิดแถวซ้ำ
 // "ล้างรายชื่อทั้งหมดในเครื่อง" ไม่ลบในชีต (ลบในชีตเฉพาะตอนกด 🗑️ ลบ ทีละรายการ)
 var SAVE_URL = 'https://qotlepudmkuniyjvqmle.supabase.co/functions/v1/booth-save?forceFunctionRegion=ap-northeast-2';
-var LS_SYNC = 'boothCRM.syncq.v1', LS_SYNC_INIT = 'boothCRM.syncInit.v1';
-// the sheet was emptied on purpose on 15 Oct 69 21:00 — the one-time catch-up only sends leads saved after that
-var SYNC_BACKFILL_SINCE = Date.UTC(2026, 9, 15, 14, 0, 0);
+var LS_SYNC = 'boothCRM.syncq.v1', LS_SYNC_INIT = 'boothCRM.syncInit.v2';
+// ⚡ (16/10/69) ผู้ใช้ขอ: รายชื่อทุกเครื่องลงชีตทั้งหมด — ส่งย้อนหลังทุกรายการที่ยังไม่เคยขึ้นชีต (ครั้งเดียวต่อเครื่อง)
+//   ก่อนหน้านี้ (v1) ส่งเฉพาะที่บันทึกหลังล้างชีต 15 ต.ค. 69 21:00 · ส่งซ้ำได้ ชีตไม่เกิดแถวซ้ำ
 var syncQ = load(LS_SYNC, []), syncBusy = false, syncRetryT = null, syncErr = '';
 function queueSync(op, id){
   syncQ = syncQ.filter(function(x){ return x.id !== id; });   // the newest change of a lead replaces an older unsent one
@@ -1411,17 +1411,15 @@ function updateSyncInfo(){
 $('#btnSyncAll').addEventListener('click', function(){
   var list = unsentLeads();
   if (!list.length) return;
-  var older = list.filter(function(l){ return l.createdAt < SYNC_BACKFILL_SINCE; }).length;
-  if (!confirm('ส่งรายชื่อในเครื่องนี้ที่ยังไม่ได้ขึ้นชีต ' + list.length + ' รายการ เข้า Google Sheet?'
-    + (older ? '\n(ในนั้น ' + older + ' รายการบันทึกก่อนล้างชีตเมื่อ 15 ต.ค. 21:00)' : ''))) return;
+  if (!confirm('ส่งรายชื่อในเครื่องนี้ที่ยังไม่ได้ขึ้นชีต ' + list.length + ' รายการ เข้า Google Sheet?')) return;
   list.slice().reverse().forEach(function(l){ syncQ.push({ op:'upsert', id:l.id, seq:Date.now() + Math.random() }); });
   store(LS_SYNC, syncQ); updateSyncInfo(); flushSync();
 });
-// one-time catch-up for leads saved on this device before sync existed (only those after the sheet was emptied)
+// one-time catch-up: every lead on this device that hasn't reached the sheet yet
 if (!load(LS_SYNC_INIT, false)){
   var queued0 = {}; syncQ.forEach(function(x){ queued0[x.id] = true; });
   leads.slice().reverse().forEach(function(l){
-    if (l.createdAt >= SYNC_BACKFILL_SINCE && !l.syncedAt && !queued0[l.id]) syncQ.push({ op:'upsert', id:l.id, seq:Date.now() + Math.random() });
+    if (!l.syncedAt && !queued0[l.id]) syncQ.push({ op:'upsert', id:l.id, seq:Date.now() + Math.random() });
   });
   store(LS_SYNC, syncQ); store(LS_SYNC_INIT, true);
 }
